@@ -1,0 +1,12 @@
+# Mac (Apple Silicon) override
+# Disables containerised Ollama — use native Ollama via `brew install ollama` instead.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.mac.yml up
+
+services:
+  ollama:
+    profiles:
+      - disabled  # prevents this service from starting on Mac
+
+  ollama-init:
+    profiles:
+      - disabled  # prevents this service from starting on Mac

@@ -1,6 +1,6 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:${OLLAMA_VERSION}
     ports:
       - "11434:11434"
     volumes:
@@ -12,7 +12,7 @@ services:
       retries: 20
 
   ollama-init:
-    image: ollama/ollama:latest
+    image: ollama/ollama:${OLLAMA_VERSION}
     depends_on:
       ollama:
         condition: service_healthy
