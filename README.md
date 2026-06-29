@@ -87,5 +87,10 @@ ollama serve &
 docker compose -f docker-compose.yml -f docker-compose.mac.yml up --build
 ```
 
-App services should reference Ollama via `http://host.docker.internal:11434` on Mac
-(as opposed to `http://ollama:11434` on Linux).
+App services connect to Ollama via the OpenAI-compatible API (`/v1`):
+
+| Platform | `OLLAMA_BASE_URL` |
+|---|---|
+| Mac (native) | `http://localhost:11434/v1` (default) |
+| Linux/Windows (Docker) | `http://ollama:11434/v1` |
+| Mac (Docker app → host Ollama) | `http://host.docker.internal:11434/v1` |

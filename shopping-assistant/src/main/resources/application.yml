@@ -30,11 +30,11 @@ spring:
     name: shopping-assistant
   ai:
     openai:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
       api-key: ollama   # required by the client but not validated by Ollama
       chat:
         options:
           model: ${OLLAMA_MODEL:qwen3:8b}
-      embedding:
-        options:
-          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+#      embedding:
+#        options:
+#          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}

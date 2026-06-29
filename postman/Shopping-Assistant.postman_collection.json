@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "8fb98dfc-539c-4c5c-a80d-54b8db9dd8f6",
-    "name": "Shopping Assistant",
+    "name": "Shopping-Assistant",
     "description": "LLM Server APIs (OpenAI Compatible)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "29615574"
@@ -16,9 +16,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/",
+              "raw": "{{LLM_HOST_BASE_URL}}/",
               "host": [
-                "{{baseUrl}}"
+                "{{LLM_HOST_BASE_URL}}"
               ],
               "path": [
                 ""
@@ -33,13 +33,31 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/v1/models",
+              "raw": "{{LLM_HOST_BASE_URL}}/v1/models",
               "host": [
-                "{{baseUrl}}"
+                "{{LLM_HOST_BASE_URL}}"
               ],
               "path": [
                 "v1",
                 "models"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List API Tags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{LLM_HOST_BASE_URL}}/api/tags",
+              "host": [
+                "{{LLM_HOST_BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "tags"
               ]
             }
           },
@@ -57,12 +75,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"model\": \"{{model}}\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful shopping assistant.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Hello!\"\n    }\n  ],\n  \"stream\": false\n}"
+              "raw": "{\n  \"model\": \"{{MODEL}}\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful shopping assistant.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Hi there!\"\n    }\n  ],\n  \"think\": false,\n  \"stream\": false\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/v1/chat/completions",
+              "raw": "{{LLM_HOST_BASE_URL}}/v1/chat/completions",
               "host": [
-                "{{baseUrl}}"
+                "{{LLM_HOST_BASE_URL}}"
               ],
               "path": [
                 "v1",
@@ -85,12 +103,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"model\": \"{{model}}\",\n  \"input\": \"Mechanical keyboards\"\n}"
+              "raw": "{\n  \"model\": \"{{MODEL}}\",\n  \"input\": \"Mechanical keyboards\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/v1/embeddings",
+              "raw": "{{LLM_HOST_BASE_URL}}/v1/embeddings",
               "host": [
-                "{{baseUrl}}"
+                "{{LLM_HOST_BASE_URL}}"
               ],
               "path": [
                 "v1",
@@ -101,6 +119,33 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Chat with LLM",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"message\":\"Hi there!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{APP_HOST_BASE_URL}}/shopping-assistant/chat",
+          "host": [
+            "{{APP_HOST_BASE_URL}}"
+          ],
+          "path": [
+            "shopping-assistant",
+            "chat"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "event": [
