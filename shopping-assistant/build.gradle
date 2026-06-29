@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'org.learnings.ai'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    versions = [
+            // the versions should match whatever our spring version is using
+            junitJupiter: '6.0.3',
+            mockitoJunitJupiter: '5.23.0',
+            assertj: '3.27.7',
+            micrometerPrometheus: '1.17.0-M3',
+            // not Spring BOM related
+            springAiVersion: '2.0.0',
+            lombok: '1.18.44'
+    ]
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${versions.springAiVersion}"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    implementation "io.micrometer:micrometer-registry-prometheus:${versions.micrometerPrometheus}"
+
+    compileOnly "org.projectlombok:lombok:${versions.lombok}"
+    annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
+
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junitJupiter}")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junitJupiter}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junitJupiter}")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${versions.junitJupiter}")
+    testImplementation("org.mockito:mockito-junit-jupiter:${versions.mockitoJunitJupiter}")
+    testImplementation("org.assertj:assertj-core:${versions.assertj}")
+    test.useJUnitPlatform()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jar.enabled=false
+bootJar.archiveFileName='service.jar'
+
+wrapper {
+    gradleVersion = "9.6.0"
+}

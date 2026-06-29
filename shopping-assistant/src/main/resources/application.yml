@@ -1,0 +1,40 @@
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      base-path: /shopping-assistant/private
+      exposure:
+        include: prometheus,configprops,env,health,heapdump
+      path-mapping:
+        prometheus: metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+    heapdump:
+      enabled: true
+
+server:
+  servlet:
+    context-path: /shopping-assistant
+  tomcat:
+    accept-count: 120
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 500
+
+spring:
+  application:
+    name: shopping-assistant
+  ai:
+    openai:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      api-key: ollama   # required by the client but not validated by Ollama
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:qwen3:8b}
+      embedding:
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
