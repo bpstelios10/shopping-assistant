@@ -14,13 +14,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Testing spring-web and spring-actuator endpoints
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("component-test-actuator")
-public class PrivateEndpointsComponentTests {
+public class PrivateEndpointsComponentTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -36,7 +33,7 @@ public class PrivateEndpointsComponentTests {
     void getActuatorMetrics() throws Exception {
         mockMvc.perform(get("/shopping-assistant/private/metrics"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("application_started_time_seconds{main_application_class=\"org.learnings.ai.shoppingassistant.componenttests.PrivateEndpointsComponentTests\"} ")));
+                .andExpect(content().string(containsString("application_started_time_seconds{main_application_class=\"org.learnings.ai.shoppingassistant.componenttests.PrivateEndpointsComponentTest\"} ")));
     }
 
     @Test

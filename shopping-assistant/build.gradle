@@ -18,10 +18,6 @@ repositories {
 
 ext {
     versions = [
-            // the versions should match whatever our spring version is using
-            junitJupiter: '6.0.3',
-            mockitoJunitJupiter: '5.23.0',
-            assertj: '3.27.7',
             micrometerPrometheus: '1.17.0-M3',
             // not Spring BOM related
             springAiVersion: '2.0.0',
@@ -47,14 +43,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:${versions.lombok}"
     annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
 
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${versions.junitJupiter}")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:${versions.junitJupiter}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${versions.junitJupiter}")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${versions.junitJupiter}")
-    testImplementation("org.mockito:mockito-junit-jupiter:${versions.mockitoJunitJupiter}")
-    testImplementation("org.assertj:assertj-core:${versions.assertj}")
-    test.useJUnitPlatform()
+    testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
 }
 
 tasks.named('test') {
