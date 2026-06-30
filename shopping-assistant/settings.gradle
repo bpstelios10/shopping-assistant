@@ -1,0 +1,7 @@
+// Override JAVA_TOOL_OPTIONS KeychainStore with the JDK's bundled cacerts so
+// Gradle can reach Maven Central (required when JAVA_TOOL_OPTIONS forces Keychain).
+def cacerts = System.getProperty('java.home') + '/lib/security/cacerts'
+System.setProperty('javax.net.ssl.trustStore', cacerts)
+System.setProperty('javax.net.ssl.trustStoreType', 'JKS')
+
+rootProject.name = 'shopping-assistant'

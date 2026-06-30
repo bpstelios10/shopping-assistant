@@ -1,0 +1,47 @@
+def excludedFromJacoco = [
+        "**/ShoppingAssistantApplication.class",
+        "org/learnings/**/*DTO.*",
+        "**/config/*"
+]
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: excludedFromJacoco)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            excludes = excludedFromJacoco
+
+            element = 'BUNDLE'
+            limit {
+                counter = 'INSTRUCTION' // bytecode precision
+                minimum = 0.85
+            }
+            limit {
+                counter = 'LINE' // most straight-forward to see
+                minimum = 0.85
+            }
+            limit {
+                counter = 'BRANCH' // is the hardest to 'cheat'
+                minimum = 0.93
+            }
+            limit {
+                counter = 'COMPLEXITY' // complex paths hits
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
