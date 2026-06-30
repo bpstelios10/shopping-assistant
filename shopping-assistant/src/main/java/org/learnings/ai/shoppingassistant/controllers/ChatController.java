@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.controllers;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.learnings.ai.shoppingassistant.services.ChatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,10 +20,14 @@ public class ChatController {
     }
 
     @PostMapping
-    public ResponseEntity<String> chat(@RequestBody CreateChat request) {
+    public ResponseEntity<ChatReply> chat(@Valid @RequestBody CreateChat request) {
 
-        return ResponseEntity.ok().body(chatService.chat(request.message()));
+        String chatResponse = chatService.chat(request.message());
+
+        return ResponseEntity.ok().body(new ChatReply(chatResponse));
     }
 
-    public record CreateChat(@NotEmpty String message) { }
+    public record CreateChat(@NotBlank String message) { }
+
+    public record ChatReply(String message) { }
 }

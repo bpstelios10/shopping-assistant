@@ -1,6 +1,9 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -14,14 +17,19 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Named.named;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -48,6 +56,30 @@ public class ChatComponentTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("some response"));
+                .andExpect(jsonPath("$.message").value("some response"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidRequestBodies")
+    void chat_whenInvalidBody_returnsBadRequest(String body) throws Exception {
+        MockHttpServletRequestBuilder request = post("/chat")
+                .contentType(MediaType.APPLICATION_JSON);
+        if (body != null) {
+            request.content(body);
+        }
+
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(chatModel);
+    }
+
+    private static Stream<Arguments> invalidRequestBodies() {
+        return Stream.of(
+                arguments(named("missing body", null)),
+                arguments(named("null message", "{}")),
+                arguments(named("empty message", "{\"message\":\"\"}")),
+                arguments(named("blank message", "{\"message\":\"  \"}"))
+        );
     }
 }
