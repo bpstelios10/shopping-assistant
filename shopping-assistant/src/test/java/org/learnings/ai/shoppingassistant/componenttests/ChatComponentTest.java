@@ -56,7 +56,7 @@ public class ChatComponentTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("some response"));
+                .andExpect(jsonPath("$.generations[0].text").value("some response"));
     }
 
     @ParameterizedTest

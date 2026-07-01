@@ -1,6 +1,6 @@
 def excludedFromJacoco = [
         "**/ShoppingAssistantApplication.class",
-        "org/learnings/**/*DTO.*",
+        "org/learnings/**/*Dto.*",
         "**/config/*"
 ]
 
