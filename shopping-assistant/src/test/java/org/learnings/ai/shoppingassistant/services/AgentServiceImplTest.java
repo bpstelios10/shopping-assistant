@@ -22,14 +22,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ChatServiceImplTest {
+class AgentServiceImplTest {
 
     @Mock
     private ChatClient chatClient;
     @Mock
     private PromptService promptService;
     @InjectMocks
-    private ChatServiceImpl chatServiceImpl;
+    private AgentServiceImpl chatServiceImpl;
 
     @Test
     void chat_whenCorrectInput_returnsResponse() {

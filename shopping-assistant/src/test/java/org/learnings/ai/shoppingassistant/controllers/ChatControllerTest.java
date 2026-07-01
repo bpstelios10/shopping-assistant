@@ -2,7 +2,7 @@ package org.learnings.ai.shoppingassistant.controllers;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.learnings.ai.shoppingassistant.services.ChatService;
+import org.learnings.ai.shoppingassistant.services.AgentService;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class ChatControllerTest {
 
     @Mock
-    private ChatService chatService;
+    private AgentService agentService;
     @InjectMocks
     private ChatController chatController;
 
@@ -28,7 +28,7 @@ class ChatControllerTest {
     void chat_whenCorrectInput_succeeds() {
         String message = "some message";
         ChatReplyDto reply = new ChatReplyDto("qwen3:8b", 10, 20, List.of());
-        when(chatService.chat(message)).thenReturn(reply);
+        when(agentService.chat(message)).thenReturn(reply);
         ChatController.CreateChat request = new ChatController.CreateChat(message);
 
         ResponseEntity<ChatReplyDto> response = chatController.chat(request);
@@ -36,13 +36,13 @@ class ChatControllerTest {
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(reply);
-        verifyNoMoreInteractions(chatService);
+        verifyNoMoreInteractions(agentService);
     }
 
     @Test
     void chat_whenServiceThrows_throwsException() {
         String message = "some message";
-        when(chatService.chat(message)).thenThrow(new RuntimeException("some error"));
+        when(agentService.chat(message)).thenThrow(new RuntimeException("some error"));
         ChatController.CreateChat request = new ChatController.CreateChat(message);
 
         assertThatThrownBy(() -> chatController.chat(request))

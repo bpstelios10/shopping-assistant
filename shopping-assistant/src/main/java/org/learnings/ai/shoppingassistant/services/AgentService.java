@@ -2,6 +2,6 @@ package org.learnings.ai.shoppingassistant.services;
 
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 
-public interface ChatService {
+public interface AgentService {
     ChatReplyDto chat(String message);
 }

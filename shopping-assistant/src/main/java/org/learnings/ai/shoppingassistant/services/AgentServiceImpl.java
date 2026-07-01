@@ -6,27 +6,27 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ChatServiceImpl implements ChatService {
+public class AgentServiceImpl implements AgentService {
 
     private final ChatClient chatClient;
     private final PromptService promptService;
 
-    public ChatServiceImpl(ChatClient chatClient, PromptService promptService) {
+    public AgentServiceImpl(ChatClient chatClient, PromptService promptService) {
         this.chatClient = chatClient;
         this.promptService = promptService;
     }
 
     @Override
     public ChatReplyDto chat(String message) {
-        ChatResponse agentResponse = chatClient
+        ChatResponse chatResponse = chatClient
                 .prompt(promptService.buildShoppingAssistantPrompt(message))
                 .call()
                 .chatResponse();
 
-        if (agentResponse == null) {
+        if (chatResponse == null) {
             throw new RuntimeException("Agent didnt reply");
         }
 
-        return ChatReplyMapper.toChatReplyDto(agentResponse);
+        return ChatReplyMapper.toChatReplyDto(chatResponse);
     }
 }
