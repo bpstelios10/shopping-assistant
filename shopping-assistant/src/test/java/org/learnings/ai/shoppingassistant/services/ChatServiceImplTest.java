@@ -11,6 +11,7 @@ import org.springframework.ai.chat.client.DefaultChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
 
@@ -33,11 +34,10 @@ class ChatServiceImplTest {
     @Test
     void chat_whenCorrectInput_returnsResponse() {
         String message = "some message";
+        Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt()).thenReturn(requestSpec);
-        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
-        when(requestSpec.user(message)).thenReturn(requestSpec);
+        when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
+        when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
@@ -53,11 +53,10 @@ class ChatServiceImplTest {
     @Test
     void chat_whenClientThrows_throwsException() {
         String message = "some message";
+        Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt()).thenReturn(requestSpec);
-        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
-        when(requestSpec.user(message)).thenReturn(requestSpec);
+        when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
+        when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
         assertThatThrownBy(() -> chatServiceImpl.chat(message))
@@ -70,11 +69,10 @@ class ChatServiceImplTest {
     @Test
     void chat_whenNoResponse_throwsException() {
         String message = "some message";
+        Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt()).thenReturn(requestSpec);
-        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
-        when(requestSpec.user(message)).thenReturn(requestSpec);
+        when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
+        when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);

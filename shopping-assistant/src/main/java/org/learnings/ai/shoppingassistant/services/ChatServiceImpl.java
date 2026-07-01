@@ -19,9 +19,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatReplyDto chat(String message) {
         ChatResponse agentResponse = chatClient
-                .prompt()
-                .system(promptService.shoppingAssistantPrompt())
-                .user(message)
+                .prompt(promptService.buildShoppingAssistantPrompt(message))
                 .call()
                 .chatResponse();
 

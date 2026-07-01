@@ -1,5 +1,7 @@
 package org.learnings.ai.shoppingassistant.services;
 
+import org.springframework.ai.chat.prompt.Prompt;
+
 public interface PromptService {
-    String shoppingAssistantPrompt();
+    Prompt buildShoppingAssistantPrompt(String userMessage);
 }
