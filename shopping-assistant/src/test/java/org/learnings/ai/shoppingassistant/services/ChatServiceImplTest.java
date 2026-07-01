@@ -19,25 +19,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ChatServiceTest {
+class ChatServiceImplTest {
 
     @Mock
     private ChatClient chatClient;
+    @Mock
+    private PromptService promptService;
     @InjectMocks
-    private ChatService chatService;
+    private ChatServiceImpl chatServiceImpl;
 
     @Test
     void chat_whenCorrectInput_returnsResponse() {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
+        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
         when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
 
-        ChatReplyDto response = chatService.chat(message);
+        ChatReplyDto response = chatServiceImpl.chat(message);
 
         assertThat(response.generations()).hasSize(1);
         assertThat(response.generations().getFirst().text()).isEqualTo("some response");
@@ -48,11 +51,12 @@ class ChatServiceTest {
     void chat_whenClientThrows_throwsException() {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
+        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
-        assertThatThrownBy(() -> chatService.chat(message))
+        assertThatThrownBy(() -> chatServiceImpl.chat(message))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
@@ -63,13 +67,14 @@ class ChatServiceTest {
     void chat_whenNoResponse_throwsException() {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
+        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);
 
-        assertThatThrownBy(() -> chatService.chat(message))
+        assertThatThrownBy(() -> chatServiceImpl.chat(message))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 
