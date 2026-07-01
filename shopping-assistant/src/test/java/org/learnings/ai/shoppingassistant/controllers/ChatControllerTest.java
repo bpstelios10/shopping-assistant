@@ -31,12 +31,11 @@ class ChatControllerTest {
         when(chatService.chat(message)).thenReturn(reply);
         ChatController.CreateChat request = new ChatController.CreateChat(message);
 
-        ResponseEntity<ChatController.ChatReply> response = chatController.chat(request);
+        ResponseEntity<ChatReplyDto> response = chatController.chat(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        ChatController.ChatReply expected = ChatController.ChatReply.fromDto(reply);
-        assertThat(response.getBody()).isEqualTo(expected);
+        assertThat(response.getBody()).isEqualTo(reply);
         verifyNoMoreInteractions(chatService);
     }
 

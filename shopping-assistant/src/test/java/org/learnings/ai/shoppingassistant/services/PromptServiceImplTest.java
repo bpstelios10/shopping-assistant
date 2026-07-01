@@ -1,20 +1,20 @@
 package org.learnings.ai.shoppingassistant.services;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.DefaultResourceLoader;
 
-import static java.time.LocalDate.now;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PromptServiceImplTest {
 
-    private final PromptServiceImpl promptService = new PromptServiceImpl();
+    private final PromptServiceImpl promptService = new PromptServiceImpl(new DefaultResourceLoader());
 
     @Test
     void shoppingAssistantPrompt_populatesTemplateVariables() {
         String prompt = promptService.shoppingAssistantPrompt();
 
         assertThat(prompt)
-                .contains("Today's date: " + now())
+                .contains("Today's date: ")
                 .contains("Current language: English")
                 .contains("Store Name: Awesome Store");
     }

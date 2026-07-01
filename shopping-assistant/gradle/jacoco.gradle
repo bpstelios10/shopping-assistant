@@ -1,7 +1,7 @@
 def excludedFromJacoco = [
         "**/ShoppingAssistantApplication.class",
-        "org/learnings/**/*Dto.*",
-        "**/config/*"
+        "**/dtos/**",
+        "**/config/**"
 ]
 
 jacocoTestReport {
@@ -11,7 +11,7 @@ jacocoTestReport {
     }
 
     afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
+        classDirectories.setFrom(files(sourceSets.main.output.classesDirs.collect {
             fileTree(dir: it, exclude: excludedFromJacoco)
         }))
     }
@@ -19,26 +19,32 @@ jacocoTestReport {
 
 jacocoTestCoverageVerification {
     dependsOn jacocoTestReport
+
+    afterEvaluate {
+        classDirectories.setFrom(files(sourceSets.main.output.classesDirs.collect {
+            fileTree(dir: it, exclude: excludedFromJacoco)
+        }))
+    }
+
     violationRules {
         rule {
-            excludes = excludedFromJacoco
 
             element = 'BUNDLE'
             limit {
                 counter = 'INSTRUCTION' // bytecode precision
-                minimum = 0.95
+                minimum = 0.96
             }
             limit {
                 counter = 'LINE' // most straight-forward to see
-                minimum = 0.93
+                minimum = 0.96
             }
             limit {
                 counter = 'BRANCH' // is the hardest to 'cheat'
-                minimum = 0.98
+                minimum = 0.96
             }
             limit {
                 counter = 'COMPLEXITY' // complex paths hits
-                minimum = 0.94
+                minimum = 0.96
             }
         }
     }

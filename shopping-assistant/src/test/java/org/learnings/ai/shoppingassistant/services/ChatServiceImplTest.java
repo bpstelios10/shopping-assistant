@@ -16,7 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ChatServiceImplTest {
@@ -33,7 +35,8 @@ class ChatServiceImplTest {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
@@ -52,7 +55,8 @@ class ChatServiceImplTest {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
@@ -68,7 +72,8 @@ class ChatServiceImplTest {
         String message = "some message";
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.shoppingAssistantPrompt()).thenReturn("some prompts");
-        when(chatClient.prompt("some prompts")).thenReturn(requestSpec);
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system("some prompts")).thenReturn(requestSpec);
         when(requestSpec.user(message)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);

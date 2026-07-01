@@ -2,12 +2,8 @@ package org.learnings.ai.shoppingassistant.services;
 
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -23,7 +19,8 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatReplyDto chat(String message) {
         ChatResponse agentResponse = chatClient
-                .prompt(promptService.shoppingAssistantPrompt())
+                .prompt()
+                .system(promptService.shoppingAssistantPrompt())
                 .user(message)
                 .call()
                 .chatResponse();
@@ -32,21 +29,6 @@ public class ChatServiceImpl implements ChatService {
             throw new RuntimeException("Agent didnt reply");
         }
 
-        List<ChatReplyDto.GenerationDto> generations = agentResponse.getResults().stream()
-                .map(result -> new ChatReplyDto.GenerationDto(
-                        result.getOutput().getToolCalls(),
-                        result.getOutput().getText(),
-                        (MessageType) result.getOutput().getMetadata().get("messageType"),
-                        (String) result.getOutput().getMetadata().get("reasoningContent")
-                ))
-                .toList();
-        ChatResponseMetadata metadata = agentResponse.getMetadata();
-
-        return new ChatReplyDto(
-                metadata.getModel(),
-                metadata.getUsage().getPromptTokens(),
-                metadata.getUsage().getCompletionTokens(),
-                generations
-        );
+        return ChatReplyMapper.toChatReplyDto(agentResponse);
     }
 }

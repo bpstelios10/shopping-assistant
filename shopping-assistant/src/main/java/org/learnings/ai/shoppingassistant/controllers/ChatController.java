@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
@@ -23,19 +21,13 @@ public class ChatController {
     }
 
     @PostMapping
-    public ResponseEntity<ChatReply> chat(@Valid @RequestBody CreateChat request) {
+    public ResponseEntity<ChatReplyDto> chat(@Valid @RequestBody CreateChat request) {
 
         ChatReplyDto chatResponse = chatService.chat(request.message());
 
-        return ResponseEntity.ok().body(ChatReply.fromDto(chatResponse));
+        return ResponseEntity.ok().body(chatResponse);
     }
 
-    public record CreateChat(@NotBlank String message) { }
-
-    public record ChatReply(String model, Integer promptTokens, Integer completionTokens,
-                            List<ChatReplyDto.GenerationDto> generations) {
-        public static ChatReply fromDto(ChatReplyDto dto) {
-            return new ChatReply(dto.model(), dto.promptTokens(), dto.completionTokens(), dto.generations());
-        }
+    public record CreateChat(@NotBlank String message) {
     }
 }
