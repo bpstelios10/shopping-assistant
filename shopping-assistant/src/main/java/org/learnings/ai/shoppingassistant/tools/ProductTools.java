@@ -10,9 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-// TODO make the tools implement some interface or extend something, so that we can inject them all as list in Agent
+// TODO: replace ProductService mock matching with semantic search over a VectorStore (see searchProducts).
 @Component
-public class ProductTools {
+public class ProductTools implements AgentTool {
 
     private final ProductService productService;
 

@@ -1,10 +1,10 @@
 package org.learnings.ai.shoppingassistant.services;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.learnings.ai.shoppingassistant.tools.ProductTools;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,8 +31,13 @@ class AgentServiceImplTest {
     private PromptService promptService;
     @Mock
     private ProductTools productTools;
-    @InjectMocks
+
     private AgentServiceImpl chatServiceImpl;
+
+    @BeforeEach
+    void setUp() {
+        chatServiceImpl = new AgentServiceImpl(chatClient, promptService, List.of(productTools));
+    }
 
     @Test
     void chat_whenCorrectInput_returnsResponse() {
