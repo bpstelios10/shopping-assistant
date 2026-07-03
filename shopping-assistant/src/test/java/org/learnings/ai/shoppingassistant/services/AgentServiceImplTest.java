@@ -3,6 +3,7 @@ package org.learnings.ai.shoppingassistant.services;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
+import org.learnings.ai.shoppingassistant.tools.ProductTools;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +29,8 @@ class AgentServiceImplTest {
     private ChatClient chatClient;
     @Mock
     private PromptService promptService;
+    @Mock
+    private ProductTools productTools;
     @InjectMocks
     private AgentServiceImpl chatServiceImpl;
 
@@ -38,6 +41,7 @@ class AgentServiceImplTest {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.tools(productTools)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
@@ -47,7 +51,7 @@ class AgentServiceImplTest {
 
         assertThat(response.generations()).hasSize(1);
         assertThat(response.generations().getFirst().text()).isEqualTo("some response");
-        verifyNoMoreInteractions(chatClient, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptService, productTools, requestSpec, callResponseSpec);
     }
 
     @Test
@@ -57,13 +61,14 @@ class AgentServiceImplTest {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.tools(productTools)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
         assertThatThrownBy(() -> chatServiceImpl.chat(message))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
-        verifyNoMoreInteractions(chatClient, requestSpec);
+        verifyNoMoreInteractions(chatClient, promptService, productTools, requestSpec);
     }
 
     @Test
@@ -73,6 +78,7 @@ class AgentServiceImplTest {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(promptService.buildShoppingAssistantPrompt(message)).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.tools(productTools)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);
@@ -81,6 +87,6 @@ class AgentServiceImplTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 
-        verifyNoMoreInteractions(chatClient, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptService, productTools, requestSpec, callResponseSpec);
     }
 }
