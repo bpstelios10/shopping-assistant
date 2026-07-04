@@ -10,4 +10,3 @@ package org.learnings.ai.shoppingassistant.tools;
  */
 public interface AgentTool {
 }
-

@@ -6,11 +6,11 @@ import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
 import java.util.List;
 
 /**
- * Application service for products. Owns orchestration/business logic and is the
- * single dependency the tools talk to. Later this is where a hybrid flow lives:
- * semantic search for candidate IDs -> client call for live price/stock -> enrichment.
+ * Client to the product backend (a separate Go service, mocked for now).
+ * The backend owns matching/filtering; this app only maps the shopper's request
+ * into structured criteria and forwards it.
  */
-public interface ProductService {
+public interface ProductClient {
 
     List<Product> getAllProducts();
 
