@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
+import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -43,6 +44,9 @@ public class ChatComponentTest {
     // TODO maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
     @MockitoBean
     private OpenAiChatModel chatModel;
+    // TODO: use a mock server later.
+    @MockitoBean
+    private ProductClient productClient;
 
     @Test
     void chat_whenCorrectInput_returnsResponse() throws Exception {

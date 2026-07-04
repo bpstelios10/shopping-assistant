@@ -38,3 +38,10 @@ spring:
 #      embedding:
 #        options:
 #          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+
+clients:
+  services:
+    products:
+      base-url: ${PRODUCTS_SERVICE_URL:http://localhost:8082}
+      connect-timeout: ${PRODUCTS_CONNECT_TIMEOUT:2s}
+      read-timeout: ${PRODUCTS_READ_TIMEOUT:5s}

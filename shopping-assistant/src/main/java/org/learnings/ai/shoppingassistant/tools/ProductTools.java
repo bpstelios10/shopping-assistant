@@ -26,6 +26,8 @@ public class ProductTools implements AgentTool {
 
     @Tool(description = "Search the store's catalog for products matching the shopper's request. "
             + "Extract any price limit or category the shopper mentions and pass them as filters. "
+            // TODO this should come from the DB:
+            + "current categories are: MAGNET POSTCARD ACCESSORY JEWELRY CLOTHES"
             + "Returns an empty list when nothing matches.")
     public List<Product> searchProducts(
             @ToolParam(description = "Free-text keywords describing the product the shopper wants, "

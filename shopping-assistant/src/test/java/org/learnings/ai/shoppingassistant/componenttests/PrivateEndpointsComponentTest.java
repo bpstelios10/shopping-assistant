@@ -1,11 +1,13 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
+import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
@@ -21,6 +23,9 @@ public class PrivateEndpointsComponentTest {
 
     @Autowired
     private MockMvc mockMvc;
+    // Mock the product backend so the context doesn't need the real Go service.
+    @MockitoBean
+    private ProductClient productClient;
 
     @Test
     void getActuatorLinks() throws Exception {
