@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.infrastructure.products;
 
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.domain.Product;
 import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
@@ -19,20 +20,23 @@ public class RestProductClient implements ProductClient {
     }
 
     @Override
-    public List<Product> getAllProducts() {
+    public @Nonnull List<Product> getAllProducts() {
         log.debug("making a request to get all products: '/products/'");
 
-        return toDomain(restClient.get()
+        ProductClientResponse[] response = restClient.get()
                 .uri("/products")
                 .retrieve()
-                .body(ProductClientResponse[].class));
+                .body(ProductClientResponse[].class);
+        log.debug("client replied with: [{}]", Arrays.toString(response));
+
+        return toDomain(response);
     }
 
     @Override
-    public List<Product> search(ProductSearchCriteria criteria) {
+    public @Nonnull List<Product> search(ProductSearchCriteria criteria) {
         log.debug("making a search request to '/products/search' with criteria [{}]", criteria);
 
-        return toDomain(restClient.get()
+        ProductClientResponse[] response = restClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.path("/products/search");
                     if (criteria.query() != null) {
@@ -47,7 +51,15 @@ public class RestProductClient implements ProductClient {
                     return uriBuilder.build();
                 })
                 .retrieve()
-                .body(ProductClientResponse[].class));
+                .body(ProductClientResponse[].class);
+        log.debug("client replied with: [{}]", Arrays.toString(response));
+
+        return toDomain(response);
+    }
+
+    @Override
+    public List<String> getAllCategories() {
+        return List.of("CLOTHES", "ACCESSORIES", "TECHNOLOGY");
     }
 
     private List<Product> toDomain(ProductClientResponse[] responses) {

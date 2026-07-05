@@ -15,4 +15,6 @@ public interface ProductClient {
     List<Product> getAllProducts();
 
     List<Product> search(ProductSearchCriteria criteria);
+
+    List<String> getAllCategories();
 }

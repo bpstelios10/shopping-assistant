@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ProductToolsTest {
+class ProductToolTest {
 
     private static final List<Product> PRODUCTS = List.of(
             new Product(UUID.randomUUID(), "Espresso Maker", "kitchen", 45.0F));
@@ -25,13 +25,13 @@ class ProductToolsTest {
     @Mock
     private ProductService productService;
     @InjectMocks
-    private ProductTools productTools;
+    private ProductTool productTool;
 
     @Test
     void listAllProducts_delegatesToService() {
         when(productService.getAllProducts()).thenReturn(PRODUCTS);
 
-        List<Product> result = productTools.listAllProducts();
+        List<Product> result = productTool.listAllProducts();
 
         assertThat(result).isEqualTo(PRODUCTS);
     }
@@ -41,7 +41,7 @@ class ProductToolsTest {
         ArgumentCaptor<ProductSearchCriteria> captor = ArgumentCaptor.forClass(ProductSearchCriteria.class);
         when(productService.search(captor.capture())).thenReturn(PRODUCTS);
 
-        List<Product> result = productTools.searchProducts("espresso maker", 50.0, "kitchen");
+        List<Product> result = productTool.searchProducts("espresso maker", 50.0, "kitchen");
 
         assertThat(result).isEqualTo(PRODUCTS);
         assertThat(captor.getValue())
@@ -53,7 +53,7 @@ class ProductToolsTest {
         ArgumentCaptor<ProductSearchCriteria> captor = ArgumentCaptor.forClass(ProductSearchCriteria.class);
         when(productService.search(captor.capture())).thenReturn(List.of());
 
-        productTools.searchProducts("widget", null, null);
+        productTool.searchProducts("widget", null, null);
 
         assertThat(captor.getValue())
                 .isEqualTo(new ProductSearchCriteria("widget", null, null));

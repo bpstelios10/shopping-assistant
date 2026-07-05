@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class ProductTools implements AgentTool {
+public class ProductTool implements AgentTool {
 
     private final ProductService productService;
 
-    public ProductTools(ProductService productService) {
+    public ProductTool(ProductService productService) {
         this.productService = productService;
     }
 
@@ -26,8 +26,6 @@ public class ProductTools implements AgentTool {
 
     @Tool(description = "Search the store's catalog for products matching the shopper's request. "
             + "Extract any price limit or category the shopper mentions and pass them as filters. "
-            // TODO this should come from the DB:
-            + "current categories are: MAGNET POSTCARD ACCESSORY JEWELRY CLOTHES"
             + "Returns an empty list when nothing matches.")
     public List<Product> searchProducts(
             @ToolParam(description = "Free-text keywords describing the product the shopper wants, "
@@ -35,7 +33,9 @@ public class ProductTools implements AgentTool {
             String query,
             @ToolParam(required = false, description = "Maximum price the shopper is willing to pay, if mentioned.")
             Double maxPrice,
-            @ToolParam(required = false, description = "Product category to filter by, e.g. 'kitchen', if mentioned.")
+            @ToolParam(required = false, description = "Product category to filter by, if mentioned. "
+                    + "Must be one of the values returned by the listCategories tool — call listCategories "
+                    + "first to get the valid categories, and only pass a value from that list.")
             String category) {
         return productService.search(new ProductSearchCriteria(query, maxPrice, category));
     }

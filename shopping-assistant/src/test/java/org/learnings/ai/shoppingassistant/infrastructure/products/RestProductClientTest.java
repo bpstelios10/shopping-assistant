@@ -12,12 +12,12 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestToUriTemplate;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-import static org.springframework.http.HttpMethod.GET;
 
 class RestProductClientTest {
 
@@ -32,7 +32,7 @@ class RestProductClientTest {
     }
 
     @Test
-    void getAllProducts_callsProductsEndpointAndMaps() {
+    void getAllProducts_whenProductServiceReturnsProducts_returnsThem() {
         server.expect(requestTo("http://products/products"))
                 .andExpect(method(GET))
                 .andRespond(withSuccess("""
@@ -78,7 +78,7 @@ class RestProductClientTest {
     }
 
     @Test
-    void search_sendsAllProvidedFiltersAsQueryParams() {
+    void search_whenQueryParamsUsed_sendsThemAllToClient() {
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("http://products/products/search")))
                 .andExpect(method(GET))
                 .andExpect(queryParam("query", "espresso"))
@@ -100,20 +100,29 @@ class RestProductClientTest {
                 .andExpect(queryParam("category", "kitchen"))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
 
-        productClient.search(new ProductSearchCriteria(null, 20.0, "kitchen"));
+        List<Product> products = productClient.search(new ProductSearchCriteria(null, 20.0, "kitchen"));
 
+        assertThat(products).isEmpty();
         server.verify();
     }
 
     @Test
-    void search_omitsNullFilters() {
+    void search_whenFiltersNull_omitsThem() {
         server.expect(requestToUriTemplate("http://products/products/search?query={q}", "widget"))
                 .andExpect(method(GET))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
 
-        productClient.search(new ProductSearchCriteria("widget", null, null));
+        List<Product> products = productClient.search(new ProductSearchCriteria("widget", null, null));
 
+        assertThat(products).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void getAllCategories_whenCategoriesExist_returnsCategories() {
+        List<String> productCategories = productClient.getAllCategories();
+
+        assertThat(productCategories).containsExactlyInAnyOrder("CLOTHES", "ACCESSORIES", "TECHNOLOGY");
         server.verify();
     }
 }
-

@@ -24,4 +24,9 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> search(ProductSearchCriteria criteria) {
         return productClient.search(criteria);
     }
+
+    @Override
+    public List<String> getAllCategories() {
+        return productClient.getAllCategories();
+    }
 }
