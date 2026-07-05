@@ -27,7 +27,7 @@ public class RestProductClient implements ProductClient {
                 .uri("/products")
                 .retrieve()
                 .body(ProductClientResponse[].class);
-        log.debug("client replied with: [{}]", Arrays.toString(response));
+        log.debug("client replied with all products: [{}]", Arrays.toString(response));
 
         return toDomain(response);
     }
@@ -52,14 +52,24 @@ public class RestProductClient implements ProductClient {
                 })
                 .retrieve()
                 .body(ProductClientResponse[].class);
-        log.debug("client replied with: [{}]", Arrays.toString(response));
+        log.debug("client found products: [{}]", Arrays.toString(response));
 
         return toDomain(response);
     }
 
     @Override
     public List<String> getAllCategories() {
-        return List.of("CLOTHES", "ACCESSORIES", "TECHNOLOGY");
+        log.debug("making request to get all categories: '/products/categories'");
+
+        String[] response = restClient.get()
+                .uri("/products/categories")
+                .retrieve()
+                .body(String[].class);
+
+        List<String> categories = response == null ? List.of() : Arrays.asList(response);
+        log.debug("client replied with categories: [{}]", categories);
+
+        return categories;
     }
 
     private List<Product> toDomain(ProductClientResponse[] responses) {

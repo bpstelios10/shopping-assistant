@@ -120,9 +120,39 @@ class RestProductClientTest {
 
     @Test
     void getAllCategories_whenCategoriesExist_returnsCategories() {
+        server.expect(requestTo("http://products/products/categories"))
+                .andExpect(method(GET))
+                .andRespond(withSuccess("""
+                        ["CLOTHES", "ACCESSORIES", "TECHNOLOGY"]
+                        """, MediaType.APPLICATION_JSON));
+
         List<String> productCategories = productClient.getAllCategories();
 
         assertThat(productCategories).containsExactlyInAnyOrder("CLOTHES", "ACCESSORIES", "TECHNOLOGY");
+        server.verify();
+    }
+
+    @Test
+    void getAllCategories_whenNoCategoriesExist_returnsEmpty() {
+        server.expect(requestTo("http://products/products/categories"))
+                .andExpect(method(GET))
+                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+        List<String> productCategories = productClient.getAllCategories();
+
+        assertThat(productCategories).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void getAllCategories_whenEmptyBody_returnsEmpty() {
+        server.expect(requestTo("http://products/products/categories"))
+                .andExpect(method(GET))
+                .andRespond(withSuccess());
+
+        List<String> productCategories = productClient.getAllCategories();
+
+        assertThat(productCategories).isEmpty();
         server.verify();
     }
 }
