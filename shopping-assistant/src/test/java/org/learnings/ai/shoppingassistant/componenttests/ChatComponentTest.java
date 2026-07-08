@@ -6,7 +6,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -22,11 +24,15 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -61,6 +67,66 @@ public class ChatComponentTest {
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.generations[0].text").value("some response"));
+    }
+
+    @Test
+    void chat_whenSameConversationId_sendsHistoryToModel() throws Exception {
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
+
+        String conversationId = "history-" + UUID.randomUUID();
+
+        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", conversationId);
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(first)))
+                .andExpect(status().isOk());
+
+        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", conversationId);
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(second)))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(promptCaptor.capture());
+
+        // the second call must carry the first turn (user question + assistant reply) as history
+        Prompt secondPrompt = promptCaptor.getAllValues().get(1);
+        assertThat(secondPrompt.getInstructions())
+                .extracting(Message::getText)
+                .contains("what is your name", "first response", "what did i just ask");
+    }
+
+    @Test
+    void chat_whenDifferentConversationId_doesNotShareHistory() throws Exception {
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
+
+        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", "conversation-a-" + UUID.randomUUID());
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(first)))
+                .andExpect(status().isOk());
+
+        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", "conversation-b-" + UUID.randomUUID());
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(second)))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(promptCaptor.capture());
+
+        // a different conversation must not leak the first turn
+        Prompt secondPrompt = promptCaptor.getAllValues().get(1);
+        assertThat(secondPrompt.getInstructions())
+                .extracting(Message::getText)
+                .doesNotContain("what is your name", "first response");
     }
 
     @ParameterizedTest

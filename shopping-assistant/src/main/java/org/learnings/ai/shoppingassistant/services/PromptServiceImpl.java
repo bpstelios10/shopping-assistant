@@ -33,7 +33,7 @@ public class PromptServiceImpl implements PromptService {
     }
 
     @Override
-    public Prompt buildShoppingAssistantPrompt(String userMessage, NavigableSet<Message> conversationHistory) {
+    public Prompt buildShoppingAssistantPrompt(String userMessage) {
         String systemText = shoppingAssistantTemplate.render(
                 Map.of(
                         "today", now(),
@@ -45,10 +45,6 @@ public class PromptServiceImpl implements PromptService {
 
         List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
         messages.add(SystemMessage.builder().text(systemText).build());
-        for (Message turn : conversationHistory) {
-            messages.add(new UserMessage(turn.question()));
-            messages.add(new AssistantMessage(turn.answer()));
-        }
         messages.add(UserMessage.builder().text(userMessage).build());
 
         // TODO: attach ChatOptions (e.g. temperature, model overrides) via

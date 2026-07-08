@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
-import org.learnings.ai.shoppingassistant.services.dtos.Message;
 import org.learnings.ai.shoppingassistant.tools.ProductTool;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,8 +15,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,8 +33,6 @@ class AgentServiceImplTest {
     @Mock
     private ChatClient chatClient;
     @Mock
-    private MemoryService memoryService;
-    @Mock
     private PromptService promptService;
     @Mock
     private ProductTool productTool;
@@ -45,18 +41,17 @@ class AgentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        chatServiceImpl = new AgentServiceImpl(chatClient, memoryService, promptService, List.of(productTool));
+        chatServiceImpl = new AgentServiceImpl(chatClient, promptService, List.of(productTool));
     }
 
     @Test
     void chat_whenCorrectInput_returnsResponse() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
-        NavigableSet<Message> history = new TreeSet<>();
-        when(memoryService.getConversationHistory(CONVERSATION_ID)).thenReturn(history);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
@@ -74,10 +69,10 @@ class AgentServiceImplTest {
     void chat_whenClientThrows_throwsException() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
-        when(memoryService.getConversationHistory(CONVERSATION_ID)).thenReturn(new TreeSet<>());
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
@@ -92,10 +87,10 @@ class AgentServiceImplTest {
     void chat_whenNoResponse_throwsException() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
-        when(memoryService.getConversationHistory(CONVERSATION_ID)).thenReturn(new TreeSet<>());
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);

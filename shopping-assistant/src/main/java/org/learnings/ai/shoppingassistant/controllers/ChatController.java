@@ -22,12 +22,12 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatReplyDto> chat(@Valid @RequestBody CreateChat request) {
-
         ChatReplyDto chatResponse = agentService.chat(request.message(), request.conversationId);
 
         return ResponseEntity.ok().body(chatResponse);
     }
 
-    public record CreateChat(@NotBlank String message, String conversationId) {
+    // TODO could use the user-id as conversation-id. maybe even get it from Security Principal, a JWT, etc
+    public record CreateChat(@NotBlank String message, @NotBlank String conversationId) {
     }
 }
