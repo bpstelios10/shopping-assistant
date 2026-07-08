@@ -27,9 +27,10 @@ class ChatControllerTest {
     @Test
     void chat_whenCorrectInput_succeeds() {
         String message = "some message";
+        String conversationId = "some-conversation-id";
         ChatReplyDto reply = new ChatReplyDto("qwen3:8b", 10, 20, List.of());
-        when(agentService.chat(message)).thenReturn(reply);
-        ChatController.CreateChat request = new ChatController.CreateChat(message);
+        when(agentService.chat(message, conversationId)).thenReturn(reply);
+        ChatController.CreateChat request = new ChatController.CreateChat(message, conversationId);
 
         ResponseEntity<ChatReplyDto> response = chatController.chat(request);
 
@@ -42,8 +43,9 @@ class ChatControllerTest {
     @Test
     void chat_whenServiceThrows_throwsException() {
         String message = "some message";
-        when(agentService.chat(message)).thenThrow(new RuntimeException("some error"));
-        ChatController.CreateChat request = new ChatController.CreateChat(message);
+        String conversationId = "some-conversation-id";
+        when(agentService.chat(message, conversationId)).thenThrow(new RuntimeException("some error"));
+        ChatController.CreateChat request = new ChatController.CreateChat(message, conversationId);
 
         assertThatThrownBy(() -> chatController.chat(request))
                 .isInstanceOf(RuntimeException.class)

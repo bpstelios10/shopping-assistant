@@ -54,7 +54,7 @@ public class ChatComponentTest {
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
 
-        ChatController.CreateChat request = new ChatController.CreateChat("some message");
+        ChatController.CreateChat request = new ChatController.CreateChat("some message", "some-conversation-id");
 
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)

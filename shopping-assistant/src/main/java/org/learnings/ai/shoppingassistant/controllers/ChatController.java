@@ -23,11 +23,11 @@ public class ChatController {
     @PostMapping
     public ResponseEntity<ChatReplyDto> chat(@Valid @RequestBody CreateChat request) {
 
-        ChatReplyDto chatResponse = agentService.chat(request.message());
+        ChatReplyDto chatResponse = agentService.chat(request.message(), request.conversationId);
 
         return ResponseEntity.ok().body(chatResponse);
     }
 
-    public record CreateChat(@NotBlank String message) {
+    public record CreateChat(@NotBlank String message, String conversationId) {
     }
 }
