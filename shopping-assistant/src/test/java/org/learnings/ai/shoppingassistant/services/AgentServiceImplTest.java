@@ -60,6 +60,29 @@ class AgentServiceImplTest {
 
         ChatReplyDto response = chatServiceImpl.chat(message, CONVERSATION_ID);
 
+        assertThat(response.conversationId()).isEqualTo(CONVERSATION_ID);
+        assertThat(response.generations()).hasSize(1);
+        assertThat(response.generations().getFirst().text()).isEqualTo("some response");
+        verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
+    }
+
+    @Test
+    void chat_whenNoConversationId_returnsRandom() {
+        String message = "some message";
+        Prompt prompt = new Prompt(message);
+        ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
+        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
+        when(chatClient.prompt(prompt)).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
+        when(requestSpec.tools(productTool)).thenReturn(requestSpec);
+        ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
+        when(requestSpec.call()).thenReturn(callResponseSpec);
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
+        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
+
+        ChatReplyDto response = chatServiceImpl.chat(message, null);
+
+        assertThat(response.conversationId()).isNotBlank();
         assertThat(response.generations()).hasSize(1);
         assertThat(response.generations().getFirst().text()).isEqualTo("some response");
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);

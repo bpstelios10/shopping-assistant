@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AiConfig {
 
+    // TODO should migrate from the default in-memory chat-memory to a redis one
     @Bean
     ChatClient chatClient(ChatModel chatModel, ChatMemory chatMemory) {
         return ChatClient.builder(chatModel)

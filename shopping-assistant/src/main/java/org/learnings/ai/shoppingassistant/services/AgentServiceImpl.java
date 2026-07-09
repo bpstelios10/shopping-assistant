@@ -1,6 +1,6 @@
 package org.learnings.ai.shoppingassistant.services;
 
-import org.jspecify.annotations.NonNull;
+import org.apache.logging.log4j.util.Strings;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.learnings.ai.shoppingassistant.tools.AgentTool;
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,6 +9,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AgentServiceImpl implements AgentService {
@@ -24,10 +25,12 @@ public class AgentServiceImpl implements AgentService {
     }
 
     @Override
-    public ChatReplyDto chat(String message, @NonNull String conversationId) {
+    public ChatReplyDto chat(String message, String conversationId) {
+        final String convId = Strings.isBlank(conversationId) ? UUID.randomUUID().toString() : conversationId;
+
         ChatResponse chatResponse = chatClient
                 .prompt(promptService.buildShoppingAssistantPrompt(message))
-                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, convId))
                 .tools(tools.toArray())
                 .call()
                 .chatResponse();
@@ -36,6 +39,6 @@ public class AgentServiceImpl implements AgentService {
             throw new RuntimeException("Agent didnt reply");
         }
 
-        return ChatReplyMapper.toChatReplyDto(chatResponse);
+        return ChatReplyMapper.toChatReplyDto(chatResponse, convId);
     }
 }

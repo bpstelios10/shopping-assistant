@@ -32,9 +32,10 @@ class ChatReplyMapperTest {
                         .usage(new DefaultUsage(10, 20))
                         .build());
 
-        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response);
+        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response, "conv-id");
 
         assertThat(dto.model()).isEqualTo("qwen3:8b");
+        assertThat(dto.conversationId()).isEqualTo("conv-id");
         assertThat(dto.promptTokens()).isEqualTo(10);
         assertThat(dto.completionTokens()).isEqualTo(20);
         assertThat(dto.generations()).hasSize(1);
@@ -56,8 +57,9 @@ class ChatReplyMapperTest {
                         .usage(new DefaultUsage(1, 2))
                         .build());
 
-        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response);
+        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response, null);
 
+        assertThat(dto.conversationId()).isEqualTo(null);
         ChatReplyDto.GenerationDto generation = dto.generations().getFirst();
         assertThat(generation.text()).isEqualTo("plain answer");
         assertThat(generation.toolCalls()).isEmpty();

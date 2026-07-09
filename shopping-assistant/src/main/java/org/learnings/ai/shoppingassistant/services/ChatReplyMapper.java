@@ -13,10 +13,11 @@ final class ChatReplyMapper {
     private ChatReplyMapper() {
     }
 
-    static ChatReplyDto toChatReplyDto(ChatResponse response) {
+    static ChatReplyDto toChatReplyDto(ChatResponse response, String conversationId) {
         ChatResponseMetadata metadata = response.getMetadata();
         return new ChatReplyDto(
                 metadata.getModel(),
+                conversationId,
                 metadata.getUsage().getPromptTokens(),
                 metadata.getUsage().getCompletionTokens(),
                 response.getResults().stream()

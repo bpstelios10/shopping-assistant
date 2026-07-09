@@ -2,7 +2,7 @@ package org.learnings.ai.shoppingassistant.services.dtos;
 
 import java.util.List;
 
-public record ChatReplyDto(String model, Integer promptTokens, Integer completionTokens,
+public record ChatReplyDto(String model, String conversationId, Integer promptTokens, Integer completionTokens,
                            List<GenerationDto> generations) {
 
     // TODO toolCalls will always be empty cause the tool is called in the final step so not shown here

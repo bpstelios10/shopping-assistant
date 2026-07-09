@@ -28,6 +28,6 @@ public class ChatController {
     }
 
     // TODO could use the user-id as conversation-id. maybe even get it from Security Principal, a JWT, etc
-    public record CreateChat(@NotBlank String message, @NotBlank String conversationId) {
+    public record CreateChat(@NotBlank String message, String conversationId) {
     }
 }
