@@ -14,6 +14,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -54,6 +55,8 @@ public class ChatComponentTest {
     // TODO: use a mock server later.
     @MockitoBean
     private ProductClient productClient;
+    @MockitoBean
+    private VectorStore vectorStore;
 
     @Test
     void chat_whenCorrectInput_returnsResponse() throws Exception {

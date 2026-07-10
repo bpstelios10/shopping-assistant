@@ -28,6 +28,11 @@ server:
 spring:
   application:
     name: shopping-assistant
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:shopping_assistant}
+    username: ${POSTGRES_USER:shopping_assistant}
+    password: ${POSTGRES_PASSWORD:shopping_assistant}
+    driver-class-name: org.postgresql.Driver
   ai:
     openai:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
@@ -35,9 +40,15 @@ spring:
       chat:
         options:
           model: ${OLLAMA_MODEL:qwen3:8b}
-#      embedding:
-#        options:
-#          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+      embedding:
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    vectorstore:
+      pgvector:
+        initialize-schema: true   # creates the vector_store table on first run
+        index-type: hnsw
+        distance-type: cosine_distance
+        dimensions: 768            # nomic-embed-text output dimension
 
 clients:
   services:

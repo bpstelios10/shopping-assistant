@@ -10,3 +10,6 @@ services:
   ollama-init:
     profiles:
       - disabled  # prevents this service from starting on Mac
+
+  # postgres/pgvector — no override needed
+

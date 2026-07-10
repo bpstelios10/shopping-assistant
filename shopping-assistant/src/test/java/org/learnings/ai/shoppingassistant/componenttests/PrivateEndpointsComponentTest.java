@@ -2,6 +2,7 @@ package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -10,7 +11,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,6 +28,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("component-test-actuator")
 public class PrivateEndpointsComponentTest {
+
+    @MockitoBean
+    private VectorStore vectorStore;
+    @MockitoBean
+    private DataSource dataSource;
 
     @Autowired
     private MockMvc mockMvc;
@@ -63,6 +76,13 @@ public class PrivateEndpointsComponentTest {
 
     @Test
     void getActuatorHealth() throws Exception {
+        Connection c = mock(Connection.class);
+        DatabaseMetaData md = mock(DatabaseMetaData.class);
+        when(dataSource.getConnection()).thenReturn(c);
+        when(c.getMetaData()).thenReturn(md);
+        when(md.getDatabaseProductName()).thenReturn("PostgreSQL");
+        when(c.isValid(anyInt())).thenReturn(true);
+
         mockMvc.perform(get("/shopping-assistant/private/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$['status']").value("UP"))

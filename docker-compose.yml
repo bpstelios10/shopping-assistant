@@ -25,8 +25,27 @@ services:
         echo 'Waiting for Ollama...';
         sleep 2;
       done;
-      ollama list | grep -q qwen3 || ollama pull qwen3:8b
+      ollama list | grep -q qwen3 || ollama pull qwen3:8b;
+      ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text
       "
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shopping_assistant}
+      POSTGRES_USER: ${POSTGRES_USER:-shopping_assistant}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopping_assistant}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shopping_assistant}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   ollama:
+  postgres:

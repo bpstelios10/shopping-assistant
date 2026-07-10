@@ -53,6 +53,20 @@ The project will gradually introduce the core building blocks of modern AI appli
 
 ## BUILD + RUN
 
+### Prerequisites
+
+The app requires **PostgreSQL with pgvector** running before it starts. Start it with:
+
+```shell
+# Linux/Windows
+docker compose up postgres -d
+
+# Mac
+docker compose -f docker-compose.yml -f docker-compose.mac.yml up postgres -d
+```
+
+The container uses `restart: unless-stopped` — you only need to do this once per machine.
+
 ### Linux / Windows (Ollama runs in Docker)
 
 ```shell

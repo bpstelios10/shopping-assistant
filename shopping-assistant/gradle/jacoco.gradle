@@ -1,7 +1,8 @@
 def excludedFromJacoco = [
         "**/ShoppingAssistantApplication.class",
         "**/dtos/**",
-        "**/config/**"
+        "**/config/**",
+        "org/learnings/ai/shoppingassistant/rag/loaddocs/**",
 ]
 
 jacocoTestReport {
