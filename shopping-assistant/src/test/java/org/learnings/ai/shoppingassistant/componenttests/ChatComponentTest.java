@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -12,8 +13,10 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,6 +61,11 @@ public class ChatComponentTest {
     @MockitoBean
     private VectorStore vectorStore;
 
+    @BeforeEach
+    void setUp() {
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+    }
+
     @Test
     void chat_whenCorrectInput_returnsResponse() throws Exception {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
@@ -97,10 +105,14 @@ public class ChatComponentTest {
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(promptCaptor.capture());
 
-        // the second call must carry the first turn (user question + assistant reply) as history
+        // the second call must carry the first turn (user question + assistant reply) as history.
+        // NOTE: the RAG advisor wraps the current user query in its QA template, so we assert
+        // against the joined text of all messages (substring match) rather than exact per-message equality.
         Prompt secondPrompt = promptCaptor.getAllValues().get(1);
-        assertThat(secondPrompt.getInstructions())
-                .extracting(Message::getText)
+        String secondPromptText = secondPrompt.getInstructions().stream()
+                .map(Message::getText)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertThat(secondPromptText)
                 .contains("what is your name", "first response", "what did i just ask");
     }
 
@@ -128,9 +140,37 @@ public class ChatComponentTest {
 
         // a different conversation must not leak the first turn
         Prompt secondPrompt = promptCaptor.getAllValues().get(1);
-        assertThat(secondPrompt.getInstructions())
-                .extracting(Message::getText)
+        String secondPromptText = secondPrompt.getInstructions().stream()
+                .map(Message::getText)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertThat(secondPromptText)
                 .doesNotContain("what is your name", "first response");
+    }
+
+    @Test
+    void chat_whenRelevantDocsExist_injectsRetrievedContextIntoPrompt() throws Exception {
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
+        // RAG advisor consults the vector store; return a known chunk so we can assert it is injected.
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(List.of(new Document("RETRIEVED_RETURN_POLICY_CHUNK")));
+
+        ChatController.CreateChat request = new ChatController.CreateChat("what is your return policy", "rag-" + UUID.randomUUID());
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        // the retrieval path must have been consulted and its content fed to the model
+        verify(vectorStore).similaritySearch(any(SearchRequest.class));
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream()
+                .map(Message::getText)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertThat(promptText).contains("RETRIEVED_RETURN_POLICY_CHUNK");
     }
 
     @ParameterizedTest

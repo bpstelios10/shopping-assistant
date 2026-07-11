@@ -42,6 +42,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
     // this dependency is for RAG ingestion only
     implementation 'org.springframework.ai:spring-ai-tika-document-reader'
+    implementation 'org.springframework.ai:spring-ai-vector-store-advisor'
 
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     runtimeOnly "org.postgresql:postgresql:${versions.postgresql}"
