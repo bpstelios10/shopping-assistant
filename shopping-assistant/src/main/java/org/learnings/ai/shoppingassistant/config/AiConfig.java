@@ -1,11 +1,13 @@
 package org.learnings.ai.shoppingassistant.config;
 
+import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +17,11 @@ import org.springframework.context.annotation.Configuration;
 public class AiConfig {
 
     @Bean
+    ChatMemory chatMemory(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
+        return new SummaryBufferChatMemory(chatMemoryRepository, chatModel, 10, 20);
+    }
+
+    @Bean
     ChatClient chatClient(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor, QuestionAnswerAdvisor ragAdvisor) {
         return ChatClient.builder(chatModel)
                 // advisors go here for now, but could be part of the agent, if we separate agents later
@@ -22,7 +29,6 @@ public class AiConfig {
                 .build();
     }
 
-    // TODO should migrate from the default in-memory chat-memory to a redis one
     @Bean
     MessageChatMemoryAdvisor memoryAdvisor(ChatMemory chatMemory) {
         return MessageChatMemoryAdvisor

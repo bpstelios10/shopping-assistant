@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -30,7 +31,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -187,6 +191,46 @@ public class ChatComponentTest {
                 .map(Message::getText)
                 .collect(java.util.stream.Collectors.joining("\n"));
         assertThat(promptText).contains("RETRIEVED_RETURN_POLICY_CHUNK");
+    }
+
+    @Test
+    void chat_when10TurnsOfQuestionsWithSameConversationId_compactsMessages() throws Exception {
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("ok")))));
+
+        String conversationId = "compact-" + UUID.randomUUID();
+        String fullConversationId = "anon:sess-abc:" + conversationId;
+
+        Map<String, List<Message>> redisStore = new ConcurrentHashMap<>();
+        when(redisChatMemoryRepository.findByConversationId(fullConversationId))
+                .thenAnswer(_ -> redisStore.getOrDefault(fullConversationId, List.of()));
+        doAnswer(invocation -> {
+            String id = invocation.getArgument(0);
+            List<Message> messages = invocation.getArgument(1);
+            redisStore.put(id, List.copyOf(messages));
+            return null;
+        }).when(redisChatMemoryRepository).saveAll(any(String.class), any(List.class));
+
+        for (int i = 1; i <= 10; i++) {
+            ChatController.CreateChat request = new ChatController.CreateChat("msg-" + i, conversationId);
+            mockMvc.perform(post("/chat")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+        }
+
+        List<Message> persisted = redisStore.get(fullConversationId);
+        assertThat(persisted).isNotNull();
+        assertThat(persisted).hasSize(11);
+        assertThat(persisted.getFirst()).isInstanceOf(SystemMessage.class);
+        assertThat(persisted.getFirst().getText()).startsWith("Summary of earlier conversation:\n");
+
+        List<String> rawTexts = persisted.stream()
+                .skip(1)
+                .map(Message::getText)
+                .toList();
+        assertThat(rawTexts).hasSize(10).contains("msg-10").doesNotContain("msg-1");
     }
 
     @ParameterizedTest
