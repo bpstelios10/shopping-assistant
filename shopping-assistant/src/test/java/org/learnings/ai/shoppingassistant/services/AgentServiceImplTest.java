@@ -60,7 +60,7 @@ class AgentServiceImplTest {
 
         ChatReplyDto response = chatServiceImpl.chat(message, CONVERSATION_ID);
 
-        assertThat(response.conversationId()).isEqualTo(CONVERSATION_ID);
+        assertThat(response.conversationId()).isEqualTo("anon:sess-abc:" + CONVERSATION_ID);
         assertThat(response.generations()).hasSize(1);
         assertThat(response.generations().getFirst().text()).isEqualTo("some response");
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);

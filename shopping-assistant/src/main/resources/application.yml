@@ -36,19 +36,35 @@ spring:
   ai:
     openai:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
-      api-key: ollama   # required by the client but not validated by Ollama
+      api-key: ollama # required by the client but not validated by Ollama
       chat:
         options:
           model: ${OLLAMA_MODEL:qwen3:8b}
+      # needed for RAG
       embedding:
         options:
           model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    # RAG configuration
     vectorstore:
       pgvector:
-        initialize-schema: true   # creates the vector_store table on first run
+        initialize-schema: true
         index-type: hnsw
         distance-type: cosine_distance
-        dimensions: 768            # nomic-embed-text output dimension
+        dimensions: 768 # nomic-embed-text output dimension
+    # chat-memory
+    chat:
+      memory:
+        repository:
+          redis:
+            initialize-schema: true
+            time-to-live: 1209600s # 14 days
+            key-prefix: "chat:memory:"
+            index-name: "chat-memory-index"
+  # this is for redis storing chat-memory
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 clients:
   services:

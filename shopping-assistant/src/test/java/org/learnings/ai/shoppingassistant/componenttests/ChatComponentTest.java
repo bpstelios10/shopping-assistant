@@ -8,8 +8,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.mockito.ArgumentCaptor;
+import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -60,6 +62,8 @@ public class ChatComponentTest {
     private ProductClient productClient;
     @MockitoBean
     private VectorStore vectorStore;
+    @MockitoBean
+    private RedisChatMemoryRepository redisChatMemoryRepository;
 
     @BeforeEach
     void setUp() {
@@ -87,8 +91,13 @@ public class ChatComponentTest {
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
-
         String conversationId = "history-" + UUID.randomUUID();
+        when(redisChatMemoryRepository.findByConversationId("anon:sess-abc:" + conversationId))
+                .thenReturn(List.of())
+                .thenReturn(List.of(
+                        new UserMessage("what is your name"),
+                        new AssistantMessage("first response")
+                ));
 
         ChatController.CreateChat first = new ChatController.CreateChat("what is your name", conversationId);
         mockMvc.perform(post("/chat")
@@ -104,6 +113,8 @@ public class ChatComponentTest {
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(promptCaptor.capture());
+        verify(redisChatMemoryRepository, times(6))
+                .findByConversationId("anon:sess-abc:" + conversationId);
 
         // the second call must carry the first turn (user question + assistant reply) as history.
         // NOTE: the RAG advisor wraps the current user query in its QA template, so we assert
@@ -112,8 +123,7 @@ public class ChatComponentTest {
         String secondPromptText = secondPrompt.getInstructions().stream()
                 .map(Message::getText)
                 .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(secondPromptText)
-                .contains("what is your name", "first response", "what did i just ask");
+        assertThat(secondPromptText).contains("what is your name", "first response", "what did i just ask");
     }
 
     @Test
@@ -123,13 +133,15 @@ public class ChatComponentTest {
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
 
-        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", "conversation-a-" + UUID.randomUUID());
+        String conversationId1 = UUID.randomUUID().toString();
+        String conversationId2 = UUID.randomUUID().toString();
+        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", conversationId1);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(first)))
                 .andExpect(status().isOk());
 
-        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", "conversation-b-" + UUID.randomUUID());
+        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", conversationId2);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(second)))
@@ -137,6 +149,10 @@ public class ChatComponentTest {
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(promptCaptor.capture());
+        verify(redisChatMemoryRepository, times(3))
+                .findByConversationId("anon:sess-abc:" + conversationId1);
+        verify(redisChatMemoryRepository, times(3))
+                .findByConversationId("anon:sess-abc:" + conversationId2);
 
         // a different conversation must not leak the first turn
         Prompt secondPrompt = promptCaptor.getAllValues().get(1);

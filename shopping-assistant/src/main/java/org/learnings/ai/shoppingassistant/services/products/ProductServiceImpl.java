@@ -25,6 +25,7 @@ public class ProductServiceImpl implements ProductService {
         return productClient.search(criteria);
     }
 
+    // TODO cache this
     @Override
     public List<String> getAllCategories() {
         return productClient.getAllCategories();

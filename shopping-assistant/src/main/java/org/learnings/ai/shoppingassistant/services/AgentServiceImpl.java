@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.learnings.ai.shoppingassistant.tools.AgentTool;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AgentServiceImpl implements AgentService {
 
@@ -26,7 +28,9 @@ public class AgentServiceImpl implements AgentService {
 
     @Override
     public ChatReplyDto chat(String message, String conversationId) {
-        final String convId = Strings.isBlank(conversationId) ? UUID.randomUUID().toString() : conversationId;
+        conversationId = Strings.isBlank(conversationId) ? UUID.randomUUID().toString() : conversationId;
+        final String convId = resolveUserId() + ":" + conversationId;
+        log.debug("chat with conversation-id: [{}]", convId);
 
         ChatResponse chatResponse = chatClient
                 .prompt(promptService.buildShoppingAssistantPrompt(message))
@@ -40,5 +44,15 @@ public class AgentServiceImpl implements AgentService {
         }
 
         return ChatReplyMapper.toChatReplyDto(chatResponse, convId);
+    }
+
+    private String resolveUserId() {
+        // TODO when i add authentication, store per user
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+//            return "user:" + auth.getName(); // or extract sub from JWT
+//        }
+        // TODO maybe have a sessionId here? and if later the user logs in, the chat history can be stored
+        return "anon:sess-abc";
     }
 }
