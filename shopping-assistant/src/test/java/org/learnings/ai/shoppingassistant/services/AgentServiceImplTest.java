@@ -44,12 +44,13 @@ class AgentServiceImplTest {
         chatServiceImpl = new AgentServiceImpl(chatClient, promptService, List.of(productTool));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void chat_whenCorrectInput_returnsResponse() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -66,12 +67,13 @@ class AgentServiceImplTest {
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void chat_whenNoConversationId_returnsRandom() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -88,12 +90,13 @@ class AgentServiceImplTest {
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void chat_whenClientThrows_throwsException() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -106,12 +109,13 @@ class AgentServiceImplTest {
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void chat_whenNoResponse_throwsException() {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message))).thenReturn(prompt);
+        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);

@@ -1,9 +1,8 @@
 package org.learnings.ai.shoppingassistant.services;
 
 import org.apache.logging.log4j.util.Strings;
-import org.learnings.ai.shoppingassistant.services.dtos.Message;
+import org.learnings.ai.shoppingassistant.services.memory.UserMemoryService;
 import org.learnings.ai.shoppingassistant.services.products.ProductService;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 
 import static java.time.LocalDate.now;
 
@@ -25,15 +23,18 @@ public class PromptServiceImpl implements PromptService {
 
     private final PromptTemplate shoppingAssistantTemplate;
     private final ProductService productService;
+    private final UserMemoryService userMemoryService;
 
-    public PromptServiceImpl(ResourceLoader resourceLoader, ProductService productService) {
+    public PromptServiceImpl(ResourceLoader resourceLoader, ProductService productService,
+                             UserMemoryService userMemoryService) {
         shoppingAssistantTemplate = new PromptTemplate(
                 resourceLoader.getResource("classpath:prompts/shopping-system.st"));
         this.productService = productService;
+        this.userMemoryService = userMemoryService;
     }
 
     @Override
-    public Prompt buildShoppingAssistantPrompt(String userMessage) {
+    public Prompt buildShoppingAssistantPrompt(String userMessage, String userId) {
         String systemText = shoppingAssistantTemplate.render(
                 Map.of(
                         "today", now(),
@@ -45,6 +46,10 @@ public class PromptServiceImpl implements PromptService {
 
         List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
         messages.add(SystemMessage.builder().text(systemText).build());
+        userMemoryService.getProfileSummary(userId)
+                .ifPresent(summary -> messages.add(SystemMessage.builder()
+                        .text("Known information about the user: " + summary)
+                        .build()));
         messages.add(UserMessage.builder().text(userMessage).build());
 
         // TODO: attach ChatOptions (e.g. temperature, model overrides) via

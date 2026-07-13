@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant;
 
 import org.junit.jupiter.api.Test;
+import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +14,8 @@ class ShoppingAssistantApplicationTests {
     private VectorStore vectorStore;
     @MockitoBean
     private RedisChatMemoryRepository redisChatMemoryRepository;
+    @MockitoBean
+    private UserMemoryRepository userMemoryRepository;
 
     @Test
     void contextLoads() {

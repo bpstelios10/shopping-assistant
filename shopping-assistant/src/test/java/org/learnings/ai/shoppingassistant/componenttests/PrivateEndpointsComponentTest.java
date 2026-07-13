@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
+import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -31,6 +32,8 @@ public class PrivateEndpointsComponentTest {
     private DataSource dataSource;
     @MockitoBean
     private RedisChatMemoryRepository redisChatMemoryRepository;
+    @MockitoBean
+    private UserMemoryRepository userMemoryRepository;
 
     @Autowired
     private MockMvc mockMvc;

@@ -51,18 +51,28 @@ The project will gradually introduce the core building blocks of modern AI appli
 - Keep the inference layer replaceable
 - Explore the complete AI application lifecycle, from local development to Kubernetes deployment
 
+## Docs
+
+- Memory design: `docs/memory.md`
+- RAG ingestion flow: `docs/RAG.md`
+
 ## BUILD + RUN
 
 ### Prerequisites
 
-The app requires **PostgreSQL with pgvector** running before it starts. Start it with:
+The app requires **PostgreSQL with pgvector** and **Redis Stack** running before it starts.
+
+Flyway migrations run automatically on startup against the configured datasource
+(`spring.datasource.*`), including the `user_memory` table migration.
+
+Start dependencies with:
 
 ```shell
 # Linux/Windows
-docker compose up postgres -d
+docker compose up postgres redis -d
 
 # Mac
-docker compose -f docker-compose.yml -f docker-compose.mac.yml up postgres -d
+docker compose -f docker-compose.yml -f docker-compose.mac.yml up postgres redis -d
 ```
 
 The container uses `restart: unless-stopped` — you only need to do this once per machine.

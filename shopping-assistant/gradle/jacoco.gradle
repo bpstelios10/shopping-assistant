@@ -3,6 +3,7 @@ def excludedFromJacoco = [
         "**/dtos/**",
         "**/config/**",
         "org/learnings/ai/shoppingassistant/rag/loaddocs/**",
+        "org/learnings/ai/shoppingassistant/**/repositories/**",
 ]
 
 jacocoTestReport {

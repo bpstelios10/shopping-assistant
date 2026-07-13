@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
+import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
@@ -40,11 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -68,6 +65,8 @@ public class ChatComponentTest {
     private VectorStore vectorStore;
     @MockitoBean
     private RedisChatMemoryRepository redisChatMemoryRepository;
+    @MockitoBean
+    private UserMemoryRepository userMemoryRepository;
 
     @BeforeEach
     void setUp() {
@@ -193,6 +192,7 @@ public class ChatComponentTest {
         assertThat(promptText).contains("RETRIEVED_RETURN_POLICY_CHUNK");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void chat_when10TurnsOfQuestionsWithSameConversationId_compactsMessages() throws Exception {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
@@ -231,6 +231,31 @@ public class ChatComponentTest {
                 .map(Message::getText)
                 .toList();
         assertThat(rawTexts).hasSize(10).contains("msg-10").doesNotContain("msg-1");
+    }
+
+    @Test
+    void chat_whenUserProfileExists_injectsUserContextIntoPrompt() throws Exception {
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
+        when(userMemoryRepository.findById("anon:sess-abc"))
+                .thenReturn(java.util.Optional.of(Map.of("currency", "EUR", "size", "M")));
+
+        ChatController.CreateChat request =
+                new ChatController.CreateChat("do you have jackets?", "profile-" + UUID.randomUUID());
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream()
+                .map(Message::getText)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertThat(promptText)
+                .contains("Known information about the user:")
+                .contains("currency=EUR").contains("size=M");
     }
 
     @ParameterizedTest
