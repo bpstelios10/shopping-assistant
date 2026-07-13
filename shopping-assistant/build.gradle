@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis'
 
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly "org.postgresql:postgresql:${versions.postgresql}"
 
     implementation "io.micrometer:micrometer-registry-prometheus:${versions.micrometerPrometheus}"
