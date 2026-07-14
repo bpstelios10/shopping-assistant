@@ -31,6 +31,8 @@ class ShoppingAgentTest {
     private static final String CONVERSATION_ID = "some-conversation-id";
 
     @Mock
+    private ChatClient.Builder chatClientBuilder;
+    @Mock
     private ChatClient chatClient;
     @Mock
     private PromptService promptService;
@@ -41,7 +43,8 @@ class ShoppingAgentTest {
 
     @BeforeEach
     void setUp() {
-        shoppingAgent = new ShoppingAgent(chatClient, promptService, List.of(productTool));
+        when(chatClientBuilder.build()).thenReturn(chatClient);
+        shoppingAgent = new ShoppingAgent(chatClientBuilder, promptService, List.of(productTool));
     }
 
     @Test

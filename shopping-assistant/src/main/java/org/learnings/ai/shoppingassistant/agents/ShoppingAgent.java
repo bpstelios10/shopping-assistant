@@ -19,8 +19,9 @@ public class ShoppingAgent implements Agent {
     private final PromptService promptService;
     private final List<AgentTool> tools;
 
-    public ShoppingAgent(ChatClient chatClient, PromptService promptService, List<AgentTool> tools) {
-        this.chatClient = chatClient;
+    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptService promptService,
+                         List<AgentTool> tools) {
+        this.chatClient = chatClientBuilderWithChatMemory.build();
         this.promptService = promptService;
         this.tools = tools;
     }

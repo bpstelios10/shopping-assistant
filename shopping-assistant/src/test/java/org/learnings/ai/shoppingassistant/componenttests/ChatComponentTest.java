@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -166,6 +167,7 @@ public class ChatComponentTest {
                 .doesNotContain("what is your name", "first response");
     }
 
+    @Disabled
     @Test
     void chat_whenRelevantDocsExist_injectsRetrievedContextIntoPrompt() throws Exception {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());

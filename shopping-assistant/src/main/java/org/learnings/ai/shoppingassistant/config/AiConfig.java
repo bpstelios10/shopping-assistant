@@ -12,6 +12,7 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 @Configuration
 public class AiConfig {
@@ -22,19 +23,18 @@ public class AiConfig {
     }
 
     @Bean
-    ChatClient chatClient(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor, QuestionAnswerAdvisor ragAdvisor) {
-        return ChatClient.builder(chatModel)
-                // advisors go here for now, but could be part of the agent, if we separate agents later
-                .defaultAdvisors(memoryAdvisor, ragAdvisor)
-                .build();
-    }
-
-    @Bean
     MessageChatMemoryAdvisor memoryAdvisor(ChatMemory chatMemory) {
         return MessageChatMemoryAdvisor
                 .builder(chatMemory)
                 .order(1) // runs first: stores/reads RAW user message
                 .build();
+    }
+
+    @Bean
+    @Scope("prototype") // builder beans are singletons. make it prototype to avoid leaks
+    ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor) {
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(memoryAdvisor);
     }
 
     @Bean
