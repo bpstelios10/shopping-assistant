@@ -1,9 +1,9 @@
-package org.learnings.ai.shoppingassistant.services;
+package org.learnings.ai.shoppingassistant.agents;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
+import org.learnings.ai.shoppingassistant.services.PromptService;
 import org.learnings.ai.shoppingassistant.tools.ProductTool;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AgentServiceImplTest {
+class ShoppingAgentTest {
 
     private static final String CONVERSATION_ID = "some-conversation-id";
 
@@ -37,11 +37,16 @@ class AgentServiceImplTest {
     @Mock
     private ProductTool productTool;
 
-    private AgentServiceImpl chatServiceImpl;
+    private ShoppingAgent shoppingAgent;
 
     @BeforeEach
     void setUp() {
-        chatServiceImpl = new AgentServiceImpl(chatClient, promptService, List.of(productTool));
+        shoppingAgent = new ShoppingAgent(chatClient, promptService, List.of(productTool));
+    }
+
+    @Test
+    void name_returnsShopping() {
+        assertThat(shoppingAgent.name()).isEqualTo("shopping");
     }
 
     @SuppressWarnings("unchecked")
@@ -59,34 +64,11 @@ class AgentServiceImplTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
         when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
 
-        ChatReplyDto response = chatServiceImpl.chat(message, CONVERSATION_ID);
+        ChatResponse response = shoppingAgent.chat(message, CONVERSATION_ID);
 
-        assertThat(response.conversationId()).isEqualTo("anon:sess-abc:" + CONVERSATION_ID);
-        assertThat(response.generations()).hasSize(1);
-        assertThat(response.generations().getFirst().text()).isEqualTo("some response");
-        verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void chat_whenNoConversationId_returnsRandom() {
-        String message = "some message";
-        Prompt prompt = new Prompt(message);
-        ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
-        when(chatClient.prompt(prompt)).thenReturn(requestSpec);
-        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
-        when(requestSpec.tools(productTool)).thenReturn(requestSpec);
-        ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
-        when(requestSpec.call()).thenReturn(callResponseSpec);
-        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
-        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
-
-        ChatReplyDto response = chatServiceImpl.chat(message, null);
-
-        assertThat(response.conversationId()).isNotBlank();
-        assertThat(response.generations()).hasSize(1);
-        assertThat(response.generations().getFirst().text()).isEqualTo("some response");
+        assertThat(response.getResult()).isNotNull();
+        assertThat(response.getResults()).hasSize(1);
+        assertThat(response.getResult().getOutput().getText()).isEqualTo("some response");
         verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
     }
 
@@ -102,7 +84,7 @@ class AgentServiceImplTest {
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
-        assertThatThrownBy(() -> chatServiceImpl.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
@@ -123,7 +105,7 @@ class AgentServiceImplTest {
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);
 
-        assertThatThrownBy(() -> chatServiceImpl.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 

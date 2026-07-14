@@ -2,7 +2,7 @@ package org.learnings.ai.shoppingassistant.controllers;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.learnings.ai.shoppingassistant.services.AgentService;
+import org.learnings.ai.shoppingassistant.services.ChatService;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class ChatControllerTest {
 
     @Mock
-    private AgentService agentService;
+    private ChatService chatService;
     @InjectMocks
     private ChatController chatController;
 
@@ -29,7 +29,7 @@ class ChatControllerTest {
         String message = "some message";
         String conversationId = "some-conversation-id";
         ChatReplyDto reply = new ChatReplyDto("qwen3:8b", conversationId, 10, 20, List.of());
-        when(agentService.chat(message, conversationId)).thenReturn(reply);
+        when(chatService.chat(message, conversationId)).thenReturn(reply);
         ChatController.CreateChat request = new ChatController.CreateChat(message, conversationId);
 
         ResponseEntity<ChatReplyDto> response = chatController.chat(request);
@@ -37,14 +37,14 @@ class ChatControllerTest {
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(reply);
-        verifyNoMoreInteractions(agentService);
+        verifyNoMoreInteractions(chatService);
     }
 
     @Test
     void chat_whenServiceThrows_throwsException() {
         String message = "some message";
         String conversationId = "some-conversation-id";
-        when(agentService.chat(message, conversationId)).thenThrow(new RuntimeException("some error"));
+        when(chatService.chat(message, conversationId)).thenThrow(new RuntimeException("some error"));
         ChatController.CreateChat request = new ChatController.CreateChat(message, conversationId);
 
         assertThatThrownBy(() -> chatController.chat(request))
