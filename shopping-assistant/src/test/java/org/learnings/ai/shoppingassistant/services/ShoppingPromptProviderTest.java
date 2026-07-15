@@ -34,7 +34,7 @@ class ShoppingPromptProviderTest {
 
     @BeforeEach
     void setup() {
-        promptService = new ShoppingPromptProvider(new DefaultResourceLoader(), productService, userMemoryService);
+        promptService = new ShoppingPromptProvider(userMemoryService, new DefaultResourceLoader(), productService);
     }
 
     @Test
