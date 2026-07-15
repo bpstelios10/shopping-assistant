@@ -15,20 +15,20 @@ import java.util.List;
 public class ShoppingAgent implements Agent {
 
     private final ChatClient chatClient;
-    private final PromptProvider promptProvider;
+    private final PromptProvider shoppingPromptProvider;
     private final List<AgentTool> tools;
 
-    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider promptProvider,
+    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider shoppingPromptProvider,
                          List<AgentTool> tools) {
         this.chatClient = chatClientBuilderWithChatMemory.build();
-        this.promptProvider = promptProvider;
+        this.shoppingPromptProvider = shoppingPromptProvider;
         this.tools = tools;
     }
 
     @Override
     public ChatResponse chat(String message, String conversationId) {
         ChatResponse chatResponse = chatClient
-                .prompt(promptProvider.buildPrompt(message))
+                .prompt(shoppingPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .tools(tools.toArray())
                 .call()

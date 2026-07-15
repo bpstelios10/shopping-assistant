@@ -1,9 +1,8 @@
-package org.learnings.ai.shoppingassistant.services;
+package org.learnings.ai.shoppingassistant.agents.prompts;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.learnings.ai.shoppingassistant.agents.prompts.ShoppingPromptProvider;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryService;
 import org.learnings.ai.shoppingassistant.services.products.ProductService;
 import org.mockito.Mock;
@@ -30,11 +29,11 @@ class ShoppingPromptProviderTest {
     @Mock
     private UserMemoryService userMemoryService;
 
-    private ShoppingPromptProvider promptService;
+    private ShoppingPromptProvider shoppingPromptProvider;
 
     @BeforeEach
     void setup() {
-        promptService = new ShoppingPromptProvider(userMemoryService, new DefaultResourceLoader(), productService);
+        shoppingPromptProvider = new ShoppingPromptProvider(userMemoryService, new DefaultResourceLoader(), productService);
     }
 
     @Test
@@ -42,12 +41,12 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = promptService.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
 
         assertThat(prompt.getSystemMessage().getText())
-                .startsWith("You are a helpful shopping assistant for Awesome Store.")
+                .startsWith("You are a helpful shopping assistant for")
                 .contains("Today's date: ")
-                .contains("Current language: English")
+                .contains("Current language: ")
                 .contains("Your responsibilities:")
                 .contains("- Help users discover products and compare options.")
                 .contains("- Answer product-related questions clearly and concisely.")
@@ -63,24 +62,13 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = promptService.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
 
         assertThat(prompt.getSystemMessage().getText())
-                .contains("Today's date: ")
                 .contains("Current language: English")
                 .contains("shopping assistant for Awesome Store")
-                .contains("Available product categories: categ1,category 2");
-        verifyNoMoreInteractions(productService, userMemoryService);
-    }
-
-    @Test
-    void buildPrompt_whenCorrectParams_leavesNoUnresolvedPlaceholders() {
-        when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
-        when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
-
-        Prompt prompt = promptService.buildPrompt("some user message");
-
-        assertThat(prompt.getSystemMessage().getText())
+                .contains("Available product categories: categ1,category 2")
+                // leave no unresolved placeholders
                 .doesNotContain("{today}")
                 .doesNotContain("{language}")
                 .doesNotContain("{storeName}")
@@ -93,7 +81,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = promptService.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
 
         assertThat(prompt.getSystemMessage().getText())
                 .contains("Available product categories: ");
@@ -104,7 +92,7 @@ class ShoppingPromptProviderTest {
     void buildPrompt_whenCategoriesMissing_throws() {
         when(productService.getAllCategories()).thenReturn(null);
 
-        assertThatThrownBy(() -> promptService.buildPrompt("some user message"))
+        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message"))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage(null);
 
@@ -115,7 +103,7 @@ class ShoppingPromptProviderTest {
     void buildPrompt_whenCategoriesCallThrows_throws() {
         doThrow(new RuntimeException("timeout")).when(productService).getAllCategories();
 
-        assertThatThrownBy(() -> promptService.buildPrompt("some user message"))
+        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("timeout");
 
@@ -123,11 +111,11 @@ class ShoppingPromptProviderTest {
     }
 
     @Test
-    void buildPrompt_addsUserMessage() {
+    void buildPrompt_whenUserMessage_addsIt() {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = promptService.buildPrompt("do you have red shoes?");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("do you have red shoes?");
 
         assertThat(prompt.getUserMessage().getText()).isEqualTo("do you have red shoes?");
         verifyNoMoreInteractions(productService, userMemoryService);
@@ -138,7 +126,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.of("currency=EUR, size=M"));
 
-        Prompt prompt = promptService.buildPrompt("some message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some message");
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
@@ -152,7 +140,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = promptService.buildPrompt("some message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some message");
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
