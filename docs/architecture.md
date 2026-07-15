@@ -102,9 +102,16 @@ Shared by all agents:
 
 ---
 
+## Routing
+
+Current: `RouterAgent` (LLM classifier) returns a `RoutingDecision {agent, confidence}`.
+`AgentOrchestrator` dispatches to the chosen agent; below a confidence threshold it falls
+back to the shopping agent. The router uses its own memory-free `ChatClient`.
+
 ## Future Evolution
 
-Replace the routing logic with an LLM-powered planner.
+Evolve single-agent routing into a multi-agent **planner** that can pick (or combine)
+several agents per request.
 
 ```text
 User

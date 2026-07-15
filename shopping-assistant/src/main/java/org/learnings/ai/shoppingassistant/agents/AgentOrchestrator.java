@@ -7,16 +7,23 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class AgentOrchestrator {
 
-    private final List<Agent> agents;
+    private static final double ROUTING_THRESHOLD = 0.6;
 
-    public AgentOrchestrator(List<Agent> agents) {
-        this.agents = agents;
+    private final Map<String, Agent> agentsByName;
+    private final RouterAgent routerAgent;
+
+    public AgentOrchestrator(List<Agent> agents, RouterAgent routerAgent) {
+        this.agentsByName = agents.stream()
+                .collect(Collectors.toMap(Agent::name, a -> a));
+        this.routerAgent = routerAgent;
     }
 
     public ChatResponse chat(String message, String conversationId) {
@@ -33,9 +40,20 @@ public class AgentOrchestrator {
         }
     }
 
-    // TODO step 1: single agent. Later: replace with a planner/router (LLM or classifier) that picks the agent.
     private Agent route(String message) {
-        return agents.getFirst();
+        RouterAgent.RoutingDecision decision = routerAgent.route(message);
+        log.debug("routing decision: {} ({})", decision.agent(), decision.confidence());
+
+        Agent fallbackAgent = agentsByName.get("shopping");
+        if (fallbackAgent == null) {
+            throw new IllegalStateException("No fallback 'shopping' agent configured");
+        }
+
+        if (decision.confidence() < ROUTING_THRESHOLD) {
+            return fallbackAgent;
+        }
+
+        return agentsByName.getOrDefault(decision.agent().name().toLowerCase(), fallbackAgent);
     }
 
     private String resolveUserId() {

@@ -36,7 +36,7 @@ Implemented by `SummaryBufferChatMemory`
 ## Conversation identity
 
 - The memory key is a composite: `{userId}:{conversationId}`.
-- `userId` is resolved per request in `AgentServiceImpl` (currently `anon:sess-abc`; to be
+- `userId` is resolved per request in `AgentOrchestrator` (currently `anon:sess-abc`; to be
   replaced by real auth later). This isolates each user's chats without changing the
   `ChatMemoryRepository` contract.
 
@@ -48,12 +48,12 @@ Durable, cross-conversation preferences (currency, size, brand, language, shippi
 - Storage: Postgres `user_memory` table, `profile jsonb`, keyed by `user_id`
   (migration `db/migration/V1__create_user_memory.sql`). No embeddings — it is an exact
   key lookup, not a similarity search.
-- **Read:** `PromptServiceImpl` injects a `Known information about the user: ...` `SystemMessage` when a
-  profile exists.
+- **Read:** `AbstractPromptProvider` injects a `Known information about the user: ...` `SystemMessage`
+  (via `PromptDecorator`) when a profile exists.
 - **Write:** captured via the `saveUserPreference` tool (`UserPreferenceTool`), which the
   model calls only when the shopper states a lasting preference. The per-request `userId`
   reaches the singleton tool via the `CurrentUser` ThreadLocal (set/cleared in
-  `AgentServiceImpl`).
+  `AgentOrchestrator`).
 
 ### Why a tool (not per-message extraction)
 - One inference — the tool call is part of the existing chat call, no extra LLM round-trip.
@@ -66,4 +66,3 @@ Durable, cross-conversation preferences (currency, size, brand, language, shippi
   some. A real/Testcontainers-Ollama integration test would verify this.
 - Summary quality depends on the chat model (`qwen3:8b`).
 - No semantic recall over past conversations (not needed for short shopping sessions).
-

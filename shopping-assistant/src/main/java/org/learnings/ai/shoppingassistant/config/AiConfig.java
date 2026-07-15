@@ -5,9 +5,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +35,11 @@ public class AiConfig {
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor) {
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(memoryAdvisor);
+    }
+
+    @Bean
+    ChatClient routerChatClient(ChatModel chatModel) {
+        return ChatClient.builder(chatModel).build();
     }
 
     // TODO make this a tool. toll is better for individual cases. advisors common for ALL agents (like chat memory)
