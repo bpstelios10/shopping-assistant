@@ -4,7 +4,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 public interface Agent {
 
-    ChatResponse chat(String message, String convId);
+    ChatResponse chat(String message, String conversationId);
 
     String name();
 }
