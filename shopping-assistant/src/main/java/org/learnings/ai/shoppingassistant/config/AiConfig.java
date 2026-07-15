@@ -37,6 +37,7 @@ public class AiConfig {
                 .defaultAdvisors(memoryAdvisor);
     }
 
+    // TODO make this a tool. toll is better for individual cases. advisors common for ALL agents (like chat memory)
     @Bean
     QuestionAnswerAdvisor ragAdvisor(VectorStore vectorStore) {
         // this is a guard, for 'dumb' models like qwen8. weak instruction-following makes it merge context sometimes

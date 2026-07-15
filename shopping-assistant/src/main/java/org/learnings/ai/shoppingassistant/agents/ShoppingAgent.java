@@ -1,8 +1,7 @@
 package org.learnings.ai.shoppingassistant.agents;
 
 import lombok.extern.slf4j.Slf4j;
-import org.learnings.ai.shoppingassistant.services.PromptService;
-import org.learnings.ai.shoppingassistant.services.memory.CurrentUser;
+import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.learnings.ai.shoppingassistant.tools.AgentTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -16,20 +15,20 @@ import java.util.List;
 public class ShoppingAgent implements Agent {
 
     private final ChatClient chatClient;
-    private final PromptService promptService;
+    private final PromptProvider promptProvider;
     private final List<AgentTool> tools;
 
-    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptService promptService,
+    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider promptProvider,
                          List<AgentTool> tools) {
         this.chatClient = chatClientBuilderWithChatMemory.build();
-        this.promptService = promptService;
+        this.promptProvider = promptProvider;
         this.tools = tools;
     }
 
     @Override
     public ChatResponse chat(String message, String conversationId) {
         ChatResponse chatResponse = chatClient
-                .prompt(promptService.buildShoppingAssistantPrompt(message, CurrentUser.get()))
+                .prompt(promptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .tools(tools.toArray())
                 .call()

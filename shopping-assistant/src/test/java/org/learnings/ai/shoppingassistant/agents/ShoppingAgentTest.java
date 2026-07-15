@@ -3,7 +3,7 @@ package org.learnings.ai.shoppingassistant.agents;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.learnings.ai.shoppingassistant.services.PromptService;
+import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.learnings.ai.shoppingassistant.tools.ProductTool;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,7 +35,7 @@ class ShoppingAgentTest {
     @Mock
     private ChatClient chatClient;
     @Mock
-    private PromptService promptService;
+    private PromptProvider promptProvider;
     @Mock
     private ProductTool productTool;
 
@@ -44,7 +44,7 @@ class ShoppingAgentTest {
     @BeforeEach
     void setUp() {
         when(chatClientBuilder.build()).thenReturn(chatClient);
-        shoppingAgent = new ShoppingAgent(chatClientBuilder, promptService, List.of(productTool));
+        shoppingAgent = new ShoppingAgent(chatClientBuilder, promptProvider, List.of(productTool));
     }
 
     @Test
@@ -58,7 +58,7 @@ class ShoppingAgentTest {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptProvider.buildPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -72,7 +72,7 @@ class ShoppingAgentTest {
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResults()).hasSize(1);
         assertThat(response.getResult().getOutput().getText()).isEqualTo("some response");
-        verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec, callResponseSpec);
     }
 
     @SuppressWarnings("unchecked")
@@ -81,7 +81,7 @@ class ShoppingAgentTest {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptProvider.buildPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -91,7 +91,7 @@ class ShoppingAgentTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
-        verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec);
     }
 
     @SuppressWarnings("unchecked")
@@ -100,7 +100,7 @@ class ShoppingAgentTest {
         String message = "some message";
         Prompt prompt = new Prompt(message);
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
-        when(promptService.buildShoppingAssistantPrompt(eq(message), any())).thenReturn(prompt);
+        when(promptProvider.buildPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.tools(productTool)).thenReturn(requestSpec);
@@ -112,6 +112,6 @@ class ShoppingAgentTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 
-        verifyNoMoreInteractions(chatClient, promptService, productTool, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec, callResponseSpec);
     }
 }
