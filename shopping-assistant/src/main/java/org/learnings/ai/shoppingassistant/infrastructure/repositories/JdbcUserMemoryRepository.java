@@ -1,8 +1,8 @@
 package org.learnings.ai.shoppingassistant.infrastructure.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -49,7 +49,7 @@ public class JdbcUserMemoryRepository implements UserMemoryRepository {
     private Map<String, Object> parse(String json) {
         try {
             return objectMapper.readValue(json, MAP_TYPE);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return new HashMap<>();
         }
     }
@@ -57,7 +57,7 @@ public class JdbcUserMemoryRepository implements UserMemoryRepository {
     private String serialize(Map<String, Object> profile) {
         try {
             return objectMapper.writeValueAsString(profile);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return "{}";
         }
     }

@@ -66,3 +66,31 @@ Durable, cross-conversation preferences (currency, size, brand, language, shippi
   some. A real/Testcontainers-Ollama integration test would verify this.
 - Summary quality depends on the chat model (`qwen3:8b`).
 - No semantic recall over past conversations (not needed for short shopping sessions).
+
+## REDIS cheat sheet
+
+Assuming Redis is running in Docker:
+
+```shell
+# get into the container
+docker exec -it <container-name> redis-cli
+# check health -> expect PONG
+PING
+# get server info
+INFO server
+# get modules -> should see module:name=search
+INFO modules
+# list keys by prefix (safe for small local dev)
+KEYS chat:memory:*
+# better for larger datasets
+SCAN 0 MATCH chat:memory:* COUNT 100
+# for a key, u can:
+TYPE <key>
+TTL <key>
+GET <key>        # if TYPE is string
+HGETALL <key>    # if TYPE is hash
+JSON.GET <key>   # if using RedisJSON
+# index checks
+FT._LIST
+FT.INFO chat-memory-index
+```

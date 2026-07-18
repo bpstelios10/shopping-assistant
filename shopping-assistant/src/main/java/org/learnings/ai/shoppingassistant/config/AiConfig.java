@@ -8,14 +8,35 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.util.StringUtils;
+import redis.clients.jedis.RedisClient;
 
 @Configuration
 public class AiConfig {
+
+    @Bean
+    RedisChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient, RedisChatMemoryProperties properties) {
+        RedisChatMemoryRepository.Builder builder = RedisChatMemoryRepository.builder().jedisClient(jedisClient);
+
+        if (StringUtils.hasText(properties.getIndexName())) {
+            builder.indexName(properties.getIndexName());
+        }
+        if (StringUtils.hasText(properties.getKeyPrefix())) {
+            builder.keyPrefix(properties.getKeyPrefix());
+        }
+        if (properties.getTimeToLive() != null && properties.getTimeToLive().toSeconds() > 0) {
+            builder.timeToLive(properties.getTimeToLive());
+        }
+        builder.initializeSchema(properties.getInitializeSchema());
+
+        return builder.build();
+    }
 
     @Bean
     ChatMemory chatMemory(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
