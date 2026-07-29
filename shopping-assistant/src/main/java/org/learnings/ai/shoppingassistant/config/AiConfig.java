@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -8,38 +9,30 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryAutoConfiguration;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
+import org.springframework.ai.tool.execution.ToolExecutionException;
+import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.util.StringUtils;
 import redis.clients.jedis.RedisClient;
 
+@Slf4j
 @Configuration
 public class AiConfig {
 
-    @Bean
-    RedisChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient, RedisChatMemoryProperties properties) {
-        RedisChatMemoryRepository.Builder builder = RedisChatMemoryRepository.builder().jedisClient(jedisClient);
-
-        if (StringUtils.hasText(properties.getIndexName())) {
-            builder.indexName(properties.getIndexName());
-        }
-        if (StringUtils.hasText(properties.getKeyPrefix())) {
-            builder.keyPrefix(properties.getKeyPrefix());
-        }
-        if (properties.getTimeToLive() != null && properties.getTimeToLive().toSeconds() > 0) {
-            builder.timeToLive(properties.getTimeToLive());
-        }
-        builder.initializeSchema(properties.getInitializeSchema());
-
-        return builder.build();
+    @Bean // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
+    RedisChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient, RedisChatMemoryProperties properties,
+                                                        RedisChatMemoryAutoConfiguration redisAutoConfig) {
+        return redisAutoConfig.redisChatMemory(jedisClient, properties);
     }
 
     @Bean
     ChatMemory chatMemory(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
+        // TODO this could be a wrapper, to have a cleaner design?
         return new SummaryBufferChatMemory(chatMemoryRepository, chatModel, 10, 20);
     }
 
@@ -56,6 +49,21 @@ public class AiConfig {
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor) {
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(memoryAdvisor);
+    }
+
+    /**
+     * Tools call an external backend that can fail (network, NPE, etc.). By default Spring AI feeds the raw
+     * exception text back to the model, which makes it flail and re-open earlier questions. Return a clean,
+     * bounded message instead so the model degrades gracefully and stays on the current turn.
+     */
+    @Bean
+    ToolExecutionExceptionProcessor toolExecutionExceptionProcessor() {
+        return (ToolExecutionException exception) -> {
+            log.warn("tool [{}] failed, returning graceful message to model",
+                    exception.getToolDefinition().name(), exception);
+            return "This tool is temporarily unavailable. Tell the shopper you couldn't retrieve that "
+                    + "information right now and answer only their latest message; do not retry other tools.";
+        };
     }
 
     @Bean

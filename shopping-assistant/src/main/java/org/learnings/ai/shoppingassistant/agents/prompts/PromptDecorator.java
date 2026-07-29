@@ -10,6 +10,11 @@ import java.util.List;
 
 public final class PromptDecorator {
 
+    private static final String LATEST_TURN_GUARD = """
+            Answer ONLY the user's latest message above.
+            The earlier user/assistant turns are prior conversation history, provided for context only.
+            Do NOT re-answer or continue previous questions unless the latest message explicitly asks you to.""";
+
     private final Prompt.Builder promptBuilder;
     private final List<Message> messages;
 
@@ -36,6 +41,8 @@ public final class PromptDecorator {
     }
 
     public Prompt build() {
-        return promptBuilder.messages(messages).build();
+        List<Message> finalMessages = new ArrayList<>(messages);
+        finalMessages.add(SystemMessage.builder().text(LATEST_TURN_GUARD).build());
+        return promptBuilder.messages(finalMessages).build();
     }
 }

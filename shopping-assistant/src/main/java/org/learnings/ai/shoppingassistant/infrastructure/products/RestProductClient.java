@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Arrays;
 import java.util.List;
 
+// TODO add exception handling
 @Slf4j
 public class RestProductClient implements ProductClient {
 

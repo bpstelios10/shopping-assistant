@@ -33,6 +33,10 @@ spring:
     username: ${POSTGRES_USER:shopping_assistant}
     password: ${POSTGRES_PASSWORD:shopping_assistant}
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
   ai:
     openai:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
@@ -54,12 +58,11 @@ spring:
     # chat-memory
     chat:
       memory:
-        repository:
-          redis:
-            initialize-schema: true
-            time-to-live: 1209600s # 14 days
-            key-prefix: "chat:memory:"
-            index-name: "chat-memory-index"
+        redis:
+          initialize-schema: true
+          time-to-live: 1209600s # 14 days
+          key-prefix: "chat:memory:"
+          index-name: "chat-memory-index"
   # this is for redis storing chat-memory
   data:
     redis:

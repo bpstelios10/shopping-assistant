@@ -86,6 +86,7 @@ KEYS chat:memory:*
 SCAN 0 MATCH chat:memory:* COUNT 100
 # for a key, u can:
 TYPE <key>
+# eg TYPE "chat:memory:anon\\:sess-abc\\:1:1784369575202"
 TTL <key>
 GET <key>        # if TYPE is string
 HGETALL <key>    # if TYPE is hash
