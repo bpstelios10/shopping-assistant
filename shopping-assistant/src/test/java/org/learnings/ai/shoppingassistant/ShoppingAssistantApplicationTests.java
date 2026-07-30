@@ -5,9 +5,11 @@ import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
+@ActiveProfiles("component-test")
 class ShoppingAssistantApplicationTests {
 
     @MockitoBean
