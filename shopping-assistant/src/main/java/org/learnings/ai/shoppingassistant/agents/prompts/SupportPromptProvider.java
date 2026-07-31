@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.agents.prompts;
 
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryService;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.core.io.ResourceLoader;
@@ -31,9 +32,15 @@ public class SupportPromptProvider extends AbstractPromptProvider implements Pro
                 )
         );
 
-        // TODO: attach ChatOptions (e.g. temperature, model overrides) via
-        //  .chatOptions(...), ideally sourced from @ConfigurationProperties, as prompting grows.
+        // low temperature - stick close to the docs. high tokens to return policies.
+        // might need some space to explain or troubleshot steps
+        ChatOptions supportChatOptions = ChatOptions
+                .builder()
+                .temperature(0.1)
+                .maxTokens(800)
+                .build();
         PromptDecorator promptDecorator = PromptDecorator.builder()
+                .withChatOptions(supportChatOptions)
                 .withSystemMessage(systemText);
 
         getUserPreferences().ifPresent(promptDecorator::withSystemMessage);

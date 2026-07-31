@@ -8,6 +8,7 @@ import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvi
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryAutoConfiguration;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
@@ -32,7 +33,6 @@ public class AiConfig {
 
     @Bean
     ChatMemory chatMemory(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
-        // TODO this could be a wrapper, to have a cleaner design?
         return new SummaryBufferChatMemory(chatMemoryRepository, chatModel, 10, 20);
     }
 
@@ -68,10 +68,18 @@ public class AiConfig {
 
     @Bean
     ChatClient routerChatClient(ChatModel chatModel) {
-        return ChatClient.builder(chatModel).build();
+        ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
+                // TODO could use a lighter model for routing. also make these values configurable
+                .temperature(0.0)
+                .maxTokens(75);
+
+        return ChatClient
+                .builder(chatModel)
+                .defaultOptions(routerChatOptionsBuilder)
+                .build();
     }
 
-    // TODO make this a tool. toll is better for individual cases. advisors common for ALL agents (like chat memory)
+    // TODO make this a tool. tool is better for individual cases. advisors common for ALL agents (like chat memory)
     @Bean
     QuestionAnswerAdvisor ragAdvisor(VectorStore vectorStore) {
         // this is a guard, for 'dumb' models like qwen8. weak instruction-following makes it merge context sometimes
