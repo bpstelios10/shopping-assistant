@@ -22,6 +22,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(
+            value = "products-per-category",
+            key = "#criteria.category",
+            condition = "#criteria.category != null && #criteria.query == null && #criteria.maxPrice == null"
+    )
     public List<Product> search(ProductSearchCriteria criteria) {
         return productClient.search(criteria);
     }

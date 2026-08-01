@@ -15,7 +15,8 @@ public class TestCacheConfig {
     @Bean
     @Primary
     CacheManager testCacheManager() {
-        CaffeineCacheManager manager = new CaffeineCacheManager("product-categories");
+        CaffeineCacheManager manager =
+                new CaffeineCacheManager("product-categories", "products-per-category");
 
         manager.setCaffeine(
                 Caffeine.newBuilder()
