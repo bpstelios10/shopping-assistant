@@ -2,6 +2,7 @@ package org.learnings.ai.shoppingassistant.services.products;
 
 import org.learnings.ai.shoppingassistant.domain.Product;
 import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,8 +26,8 @@ public class ProductServiceImpl implements ProductService {
         return productClient.search(criteria);
     }
 
-    // TODO cache this
     @Override
+    @Cacheable("product-categories")
     public List<String> getAllCategories() {
         return productClient.getAllCategories();
     }

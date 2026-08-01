@@ -94,7 +94,7 @@ public class ShoppingAgentComponentTest {
                 .andExpect(jsonPath("$.generations[0].text").value("some response"));
         verify(chatModel).getOptions();
         verify(chatModel).call(any(Prompt.class));
-        verify(productClient).getAllCategories();
+        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:some-conversation-id");
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:some-conversation-id"), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
@@ -141,7 +141,7 @@ public class ShoppingAgentComponentTest {
         assertThat(secondPromptText).contains("what is your name", "first response", "what did i just ask");
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
-        verify(productClient, times(2)).getAllCategories();
+        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
@@ -184,7 +184,7 @@ public class ShoppingAgentComponentTest {
                 .doesNotContain("what is your name", "first response");
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
-        verify(productClient, times(2)).getAllCategories();
+        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId1);
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId2);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId1), any());
@@ -233,7 +233,7 @@ public class ShoppingAgentComponentTest {
         assertThat(rawTexts).hasSize(10).contains("msg-10").doesNotContain("msg-1");
         verify(chatModel, times(10)).getOptions();
         verify(chatModel, times(11)).call(any(Prompt.class));
-        verify(productClient, times(10)).getAllCategories();
+        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(30)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(20)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(10)).findById("anon:sess-abc");
@@ -265,7 +265,7 @@ public class ShoppingAgentComponentTest {
                 .contains("currency=EUR").contains("size=M");
         verify(chatModel).getOptions();
         verify(chatModel).call(any(Prompt.class));
-        verify(productClient).getAllCategories();
+        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:profile-" + conversationId);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");

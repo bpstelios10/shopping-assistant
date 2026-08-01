@@ -49,6 +49,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-flyway'
     implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly "org.postgresql:postgresql:${versions.postgresql}"
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.4'
 
     implementation "io.micrometer:micrometer-registry-prometheus:${versions.micrometerPrometheus}"
 
@@ -60,7 +61,7 @@ dependencies {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
-    maxHeapSize = "1G"
+    maxHeapSize = "2G"
 }
 
 jar.enabled=false
