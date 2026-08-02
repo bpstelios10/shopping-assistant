@@ -17,6 +17,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable("all-products")
     public List<Product> getAllProducts() {
         return productClient.getAllProducts();
     }

@@ -31,9 +31,16 @@ public class CacheConfig {
                         .maximumSize(10)
                         .build()
         );
+        CaffeineCache featuredProductsCache = new CaffeineCache(
+                "all-products",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(Duration.ofMinutes(4))
+                        .maximumSize(1)
+                        .build()
+        );
 
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        cacheManager.setCaches(List.of(productCategoriesCache, productsCache));
+        cacheManager.setCaches(List.of(productCategoriesCache, productsCache, featuredProductsCache));
 
         return cacheManager;
     }

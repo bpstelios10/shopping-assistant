@@ -50,6 +50,7 @@ public class CachingComponentTest {
     void cleanCache() {
         Objects.requireNonNull(cacheManager.getCache("product-categories")).clear();
         Objects.requireNonNull(cacheManager.getCache("products-per-category")).clear();
+        Objects.requireNonNull(cacheManager.getCache("all-products")).clear();
     }
 
     @Test
@@ -129,6 +130,47 @@ public class CachingComponentTest {
 
                     verify(productClient, times(2))
                             .search(criteria);
+                });
+
+        verifyNoMoreInteractions(productClient);
+    }
+
+    @Test
+    void getAllProducts_whenTwoRequestsRun_cachesTheValues() {
+        Product product = new Product(UUID.randomUUID(), "Smartphone", "Electronics", 699.99f);
+        when(productClient.getAllProducts()).thenReturn(List.of(product));
+
+        List<Product> allCategories1 = productService.getAllProducts();
+        List<Product> allCategories2 = productService.getAllProducts();
+        Cache categoriesCache = cacheManager.getCache("all-products");
+
+        assertThat(allCategories1).hasSize(1);
+        assertThat(allCategories1).containsExactlyInAnyOrder(product);
+        assertThat(allCategories1).isEqualTo(allCategories2);
+        verify(productClient, times(1)).getAllProducts();
+        verifyNoMoreInteractions(productClient);
+
+        // also validate cache hit directly
+        assertThat(categoriesCache).isNotNull();
+        Cache.ValueWrapper valueWrapper = categoriesCache.get(SimpleKey.EMPTY);
+        assertThat(valueWrapper).isNotNull();
+        assertThat(valueWrapper.get()).isNotNull();
+    }
+
+    @Test
+    void getAllProducts_whenTwoRequestsRunAndSecondIsAfterCacheExpiration_noCacheUsed() {
+        Product product = new Product(UUID.randomUUID(), "Smartphone", "Electronics", 699.99f);
+        when(productClient.getAllProducts()).thenReturn(List.of(product));
+
+        productService.getAllProducts();
+        await()
+                .atMost(Duration.ofMillis(600))
+                .pollInterval(Duration.ofMillis(200))
+                .untilAsserted(() -> {
+                    productService.getAllProducts();
+
+                    verify(productClient, times(2))
+                            .getAllProducts();
                 });
 
         verifyNoMoreInteractions(productClient);
