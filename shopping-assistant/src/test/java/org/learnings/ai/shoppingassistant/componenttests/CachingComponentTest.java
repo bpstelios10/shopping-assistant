@@ -5,18 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.learnings.ai.shoppingassistant.config.TestCacheConfig;
 import org.learnings.ai.shoppingassistant.domain.Product;
 import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
-import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.learnings.ai.shoppingassistant.services.products.ProductService;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 import java.util.List;
@@ -30,17 +25,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
 @ActiveProfiles("component-test")
 @Import(TestCacheConfig.class)
-public class CachingComponentTest {
+public class CachingComponentTest extends AbstractComponentTestWithMockedExternals {
 
-    @MockitoBean
-    private VectorStore vectorStore;
-    @MockitoBean
-    private RedisChatMemoryRepository redisChatMemoryRepository;
-    @MockitoBean
-    ProductClient productClient;
     @Autowired
     ProductService productService;
     @Autowired

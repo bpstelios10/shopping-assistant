@@ -3,16 +3,8 @@ package org.learnings.ai.shoppingassistant.componenttests;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.stream.Stream;
@@ -24,19 +16,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
 @ActiveProfiles("component-test")
-public class ChatEndpointInputValidationComponentTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-    @MockitoBean
-    private VectorStore vectorStore;
-    @MockitoBean
-    private RedisChatMemoryRepository redisChatMemoryRepository;
-    @MockitoBean
-    private UserMemoryRepository userMemoryRepository;
+public class ChatEndpointInputValidationComponentTest extends AbstractComponentTestWithMockedExternals {
 
     @ParameterizedTest
     @MethodSource("invalidRequestBodies")

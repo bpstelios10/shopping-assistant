@@ -4,11 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.learnings.ai.shoppingassistant.agents.RouterAgent;
 import org.learnings.ai.shoppingassistant.controllers.ChatController;
-import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -18,14 +15,10 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
@@ -41,13 +34,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
 @ActiveProfiles("component-test")
-public class ShoppingAgentComponentTest {
+public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedExternals {
 
-    @Autowired
-    private MockMvc mockMvc;
     @Autowired
     private JsonMapper mapper;
     // TODO maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
@@ -57,14 +46,6 @@ public class ShoppingAgentComponentTest {
     @MockitoBean
     private OpenAiChatModel chatModel;
     // TODO: use a mock server later.
-    @MockitoBean
-    private ProductClient productClient;
-    @MockitoBean
-    private VectorStore vectorStore;
-    @MockitoBean
-    private RedisChatMemoryRepository redisChatMemoryRepository;
-    @MockitoBean
-    private UserMemoryRepository userMemoryRepository;
 
     @BeforeEach
     void setUp() {

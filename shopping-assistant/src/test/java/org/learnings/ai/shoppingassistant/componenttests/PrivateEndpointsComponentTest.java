@@ -1,19 +1,8 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
-import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.learnings.ai.shoppingassistant.services.products.ProductClient;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import javax.sql.DataSource;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,25 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
 @ActiveProfiles("component-test-actuator")
-public class PrivateEndpointsComponentTest {
-
-    @MockitoBean
-    private VectorStore vectorStore;
-    @MockitoBean
-    private DataSource dataSource;
-    @MockitoBean
-    private RedisChatMemoryRepository redisChatMemoryRepository;
-    @MockitoBean
-    private UserMemoryRepository userMemoryRepository;
-
-    @Autowired
-    private MockMvc mockMvc;
-    // Mock the product backend so the context doesn't need the real Go service.
-    @MockitoBean
-    private ProductClient productClient;
+public class PrivateEndpointsComponentTest extends AbstractComponentTestWithMockedExternals {
 
     @Test
     void getActuatorLinks() throws Exception {

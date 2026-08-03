@@ -6,7 +6,7 @@ import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
 import java.util.List;
 
 /**
- * Client to the product backend (a separate Go service, mocked for now).
+ * Client to the product backend (a separate Go service).
  * The backend owns matching/filtering; this app only maps the shopper's request
  * into structured criteria and forwards it.
  */
