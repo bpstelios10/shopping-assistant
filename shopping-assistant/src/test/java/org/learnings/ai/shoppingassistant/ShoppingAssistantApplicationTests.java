@@ -19,11 +19,8 @@ class ShoppingAssistantApplicationTests {
     private RedisChatMemoryRepository redisChatMemoryRepository;
     @MockitoBean
     private UserMemoryRepository userMemoryRepository;
-    @MockitoBean
-    OrderClient orderClient;
 
     @Test
     void contextLoads() {
     }
 }
-

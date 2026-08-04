@@ -1,7 +1,6 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.learnings.ai.shoppingassistant.services.orders.OrderClient;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -31,6 +30,4 @@ public abstract class AbstractComponentTestWithMockedExternals {
     // Mock the product backend so the context doesn't need the real Go service.
     @MockitoBean
     ProductClient productClient;
-    @MockitoBean
-    OrderClient orderClient;
 }
