@@ -71,7 +71,8 @@ public class AiConfig {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
                 // TODO could use a lighter model for routing. also make these values configurable
                 .temperature(0.0)
-                .maxTokens(75);
+//                .maxTokens(1000)
+                ;
 
         return ChatClient
                 .builder(chatModel)

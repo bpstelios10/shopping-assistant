@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
-import org.learnings.ai.shoppingassistant.tools.ProductTool;
+import org.learnings.ai.shoppingassistant.tools.OrderTool;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ShoppingAgentTest {
+class OrderAgentTest {
 
     private static final String CONVERSATION_ID = "some-conversation-id";
 
@@ -36,19 +36,19 @@ class ShoppingAgentTest {
     @Mock
     private PromptProvider promptProvider;
     @Mock
-    private ProductTool productTool;
+    private OrderTool orderTool;
 
-    private OrderAgent orderAgent;
+    private ShoppingAgent shoppingAgent;
 
     @BeforeEach
     void setUp() {
         when(chatClientBuilder.build()).thenReturn(chatClient);
-        orderAgent = new OrderAgent(chatClientBuilder, promptProvider, List.of(productTool));
+        shoppingAgent = new ShoppingAgent(chatClientBuilder, promptProvider, List.of(orderTool));
     }
 
     @Test
-    void name_returnsOrders() {
-        assertThat(orderAgent.name()).isEqualTo("orders");
+    void name_returnsShopping() {
+        assertThat(shoppingAgent.name()).isEqualTo("shopping");
     }
 
     @SuppressWarnings("unchecked")
@@ -69,18 +69,18 @@ class ShoppingAgentTest {
 
             return requestSpec;
         }).when(requestSpec).advisors(any(Consumer.class));
-        when(requestSpec.tools(productTool)).thenReturn(requestSpec);
+        when(requestSpec.tools(orderTool)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
         when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
 
-        ChatResponse response = orderAgent.chat(message, CONVERSATION_ID);
+        ChatResponse response = shoppingAgent.chat(message, CONVERSATION_ID);
 
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResults()).hasSize(1);
         assertThat(response.getResult().getOutput().getText()).isEqualTo("some response");
-        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, orderTool, requestSpec, callResponseSpec);
     }
 
     @SuppressWarnings("unchecked")
@@ -92,14 +92,14 @@ class ShoppingAgentTest {
         when(promptProvider.buildPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
-        when(requestSpec.tools(productTool)).thenReturn(requestSpec);
+        when(requestSpec.tools(orderTool)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
-        assertThatThrownBy(() -> orderAgent.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
-        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, orderTool, requestSpec);
     }
 
     @SuppressWarnings("unchecked")
@@ -111,15 +111,15 @@ class ShoppingAgentTest {
         when(promptProvider.buildPrompt(eq(message))).thenReturn(prompt);
         when(chatClient.prompt(prompt)).thenReturn(requestSpec);
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
-        when(requestSpec.tools(productTool)).thenReturn(requestSpec);
+        when(requestSpec.tools(orderTool)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);
 
-        assertThatThrownBy(() -> orderAgent.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 
-        verifyNoMoreInteractions(chatClient, promptProvider, productTool, requestSpec, callResponseSpec);
+        verifyNoMoreInteractions(chatClient, promptProvider, orderTool, requestSpec, callResponseSpec);
     }
 }

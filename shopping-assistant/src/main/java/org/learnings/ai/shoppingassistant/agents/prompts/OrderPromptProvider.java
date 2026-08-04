@@ -39,7 +39,7 @@ public class OrderPromptProvider extends AbstractPromptProvider implements Promp
         ChatOptions orderChatOptions = ChatOptions
                 .builder()
                 .temperature(0.1)
-                .maxTokens(200)
+                .maxTokens(600)
                 .build();
         PromptDecorator promptDecorator = PromptDecorator
                 .builder()

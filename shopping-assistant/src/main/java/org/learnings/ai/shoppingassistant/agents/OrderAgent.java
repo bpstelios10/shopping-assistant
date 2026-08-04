@@ -12,23 +12,23 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class ShoppingAgent implements Agent {
+public class OrderAgent implements Agent {
 
     private final ChatClient chatClient;
-    private final PromptProvider shoppingPromptProvider;
+    private final PromptProvider orderPromptProvider;
     private final List<AgentTool> tools;
 
-    public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider shoppingPromptProvider,
-                         List<AgentTool> tools) {
+    public OrderAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider orderPromptProvider,
+                      List<AgentTool> tools) {
         this.chatClient = chatClientBuilderWithChatMemory.build();
-        this.shoppingPromptProvider = shoppingPromptProvider;
+        this.orderPromptProvider = orderPromptProvider;
         this.tools = tools;
     }
 
     @Override
     public ChatResponse chat(String message, String conversationId) {
         ChatResponse chatResponse = chatClient
-                .prompt(shoppingPromptProvider.buildPrompt(message))
+                .prompt(orderPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .tools(tools.toArray())
                 .call()
@@ -43,6 +43,6 @@ public class ShoppingAgent implements Agent {
 
     @Override
     public String name() {
-        return "shopping";
+        return "orders";
     }
 }
