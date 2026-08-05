@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class ProductTool implements AgentTool {
+public class ProductTool implements ShoppingAgentTool {
 
     private final ProductService productService;
 

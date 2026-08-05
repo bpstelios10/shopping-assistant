@@ -61,12 +61,12 @@ public class AgentOrchestrator {
     }
 
     private String resolveUserId() {
-        // TODO when i add authentication, store per user - move this to a filter maybe? if authenticated, add user-id in context
+        // task: when i add authentication, store per user - move this to a filter maybe? if authenticated, add user-id in context
 //        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 //        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
 //            return "user:" + auth.getName(); // or extract sub from JWT
 //        }
-        // TODO maybe have a sessionId here? and if later the user logs in, the chat history can be stored
+        // task: have a sessionId here? and if later the user logs in, the chat history can be stored
         return "anon:sess-abc";
     }
 }

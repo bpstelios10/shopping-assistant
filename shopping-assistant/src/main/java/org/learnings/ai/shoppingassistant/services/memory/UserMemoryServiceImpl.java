@@ -18,7 +18,7 @@ public class UserMemoryServiceImpl implements UserMemoryService {
 
     @Override
     public Optional<String> getProfileSummary(String userId) {
-        // TODO add a call to get user profile? like name, address etc?
+        // thought: add a call to get user profile? like name, address etc?
         return repository.findById(userId)
                 .filter(profile -> !profile.isEmpty())
                 .map(profile -> profile.entrySet().stream()

@@ -2,7 +2,7 @@ package org.learnings.ai.shoppingassistant.agents;
 
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
-import org.learnings.ai.shoppingassistant.tools.AgentTool;
+import org.learnings.ai.shoppingassistant.tools.ShoppingAgentTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -16,10 +16,10 @@ public class ShoppingAgent implements Agent {
 
     private final ChatClient chatClient;
     private final PromptProvider shoppingPromptProvider;
-    private final List<AgentTool> tools;
+    private final List<ShoppingAgentTool> tools;
 
     public ShoppingAgent(ChatClient.Builder chatClientBuilderWithChatMemory, PromptProvider shoppingPromptProvider,
-                         List<AgentTool> tools) {
+                         List<ShoppingAgentTool> tools) {
         this.chatClient = chatClientBuilderWithChatMemory.build();
         this.shoppingPromptProvider = shoppingPromptProvider;
         this.tools = tools;

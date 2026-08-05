@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class OrderTool implements AgentTool {
+public class OrderTool implements OrderAgentTool {
 
     private final OrderService orderService;
 

@@ -10,7 +10,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Optional;
 import java.util.UUID;
 
-// TODO add exception handling
+// task: add exception handling
 @Slf4j
 public class RestOrderClient implements OrderClient {
 

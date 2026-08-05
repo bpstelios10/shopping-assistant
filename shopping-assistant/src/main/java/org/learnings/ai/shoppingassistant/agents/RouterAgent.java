@@ -20,12 +20,24 @@ public class RouterAgent {
                 .system("""
                         You are a routing planner for an online store.
                         
-                        Analyze the user's request and split it into one or more independent tasks.
+                        Analyze the user's request and produce the minimum number of agent calls required.
                         
-                        For each task:
-                        - Select the most appropriate agent.
-                        - Rewrite the task so it can be executed independently.
-                        - Assign a confidence between 0.0 and 1.0.
+                        Each routing step corresponds to exactly one agent invocation.
+                        
+                        Only create multiple steps when:
+                        - different agents are required, or
+                        - the requests are truly independent and cannot reasonably be answered in a single call.
+                        
+                        Otherwise, merge them into one step.
+                        
+                        If multiple requests:
+                        - require the same agent,
+                        - depend on one another, or
+                        - can reasonably be answered together,
+                        
+                        they MUST be merged into a single task.
+                        
+                        Only split tasks when separate agent calls are actually required.
                         
                         Available agents:
                         
@@ -51,13 +63,80 @@ public class RouterAgent {
                         
                         Return the tasks in execution order.
                         Do not return duplicate tasks.
+                        
+                        EXAMPLES:
+                        USER: what is my order X status? and what is the return policy?
+                        Return:
+                        {
+                          "decisions": [
+                            {
+                              "agent": "ORDERS",
+                              "task": "what is my order X status?",
+                              "confidence": X
+                            },
+                            {
+                              "agent": "SUPPORT",
+                              "task": "what is the return policy?",
+                              "confidence": X
+                            }
+                          ]
+                        }
+                        
+                        User: do you have any macbooks? if yes, what is the price?
+                        This is multiple requests. But they can be merged and return:
+                        {
+                          "decisions": [
+                            {
+                              "agent": "SHOPPING",
+                              "task": "do you have any macbooks? if yes, what is the price?",
+                              "confidence": X
+                            }
+                          ]
+                        }
+                        
+                        User: can u tell me all the categories of products u sell and explain the categories?
+                        This is multiple requests. But they can be merged and return:
+                        {
+                          "decisions": [
+                            {
+                              "agent": "SHOPPING",
+                              "task": "can u tell me all the categories of products u sell and explain the categories?",
+                              "confidence": X
+                            }
+                          ]
+                        }
+                        
+                        User: "What categories of products do you sell and explain each category."
+                        Return:
+                        {
+                          "decisions": [
+                            {
+                              "agent": "SHOPPING",
+                              "task": "What categories of products do you sell and explain each category?",
+                              "confidence": X
+                            }
+                          ]
+                        }
+                        
+                        User: "Compare the iPhone 17 and Pixel 11 and recommend one."
+                        Return:
+                        {
+                          "decisions": [
+                            {
+                              "agent": "SHOPPING",
+                              "task": "Compare the iPhone 17 and Pixel 11 and recommend one.",
+                              "confidence": X
+                            }
+                          ]
+                        }
                         """)
                 .user(message)
                 .call()
                 .entity(RoutingPlan.class);
     }
 
-    public record RoutingPlan(List<RoutingStep> decisions) {}
+    public record RoutingPlan(List<RoutingStep> decisions) {
+    }
 
     // task: is there a value of adding reasoning here as well? as third param
     public record RoutingStep(AgentType agent, String task, double confidence) {

@@ -39,7 +39,7 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
 
     @Autowired
     private JsonMapper mapper;
-    // TODO maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
+    // task: maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
     // and then add some scenarios to validate that i actually use productClient.search/getAllProducts
     @MockitoBean
     private ChatClient routerChatClient;

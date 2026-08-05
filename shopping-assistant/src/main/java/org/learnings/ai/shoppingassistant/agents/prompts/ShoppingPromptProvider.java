@@ -43,7 +43,7 @@ public class ShoppingPromptProvider extends AbstractPromptProvider implements Pr
         ChatOptions shoppingChatOptions = ChatOptions
                 .builder()
                 .temperature(0.2)
-                .maxTokens(1000)
+                .maxTokens(1500)
                 .build();
         PromptDecorator promptDecorator = PromptDecorator
                 .builder()

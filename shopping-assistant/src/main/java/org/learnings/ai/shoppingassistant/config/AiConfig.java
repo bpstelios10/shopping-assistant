@@ -80,7 +80,7 @@ public class AiConfig {
                 .build();
     }
 
-    // TODO make this a tool. tool is better for individual cases. advisors common for ALL agents (like chat memory)
+    // thought: could be a tool. tool is better for individual cases. advisors common for ALL agents (like chat memory)
     @Bean
     QuestionAnswerAdvisor ragAdvisor(VectorStore vectorStore) {
         // this is a guard, for 'dumb' models like qwen8. weak instruction-following makes it merge context sometimes

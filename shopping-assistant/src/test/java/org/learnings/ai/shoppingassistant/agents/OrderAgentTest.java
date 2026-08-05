@@ -37,18 +37,17 @@ class OrderAgentTest {
     private PromptProvider promptProvider;
     @Mock
     private OrderTool orderTool;
-
-    private ShoppingAgent shoppingAgent;
+    private OrderAgent orderAgent;
 
     @BeforeEach
     void setUp() {
         when(chatClientBuilder.build()).thenReturn(chatClient);
-        shoppingAgent = new ShoppingAgent(chatClientBuilder, promptProvider, List.of(orderTool));
+        orderAgent = new OrderAgent(chatClientBuilder, promptProvider, List.of(orderTool));
     }
 
     @Test
-    void name_returnsShopping() {
-        assertThat(shoppingAgent.name()).isEqualTo("shopping");
+    void name_returnsOrders() {
+        assertThat(orderAgent.name()).isEqualTo("orders");
     }
 
     @SuppressWarnings("unchecked")
@@ -75,7 +74,7 @@ class OrderAgentTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
         when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
 
-        ChatResponse response = shoppingAgent.chat(message, CONVERSATION_ID);
+        ChatResponse response = orderAgent.chat(message, CONVERSATION_ID);
 
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResults()).hasSize(1);
@@ -95,7 +94,7 @@ class OrderAgentTest {
         when(requestSpec.tools(orderTool)).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
 
-        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> orderAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("connection failed");
 
@@ -116,7 +115,7 @@ class OrderAgentTest {
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.chatResponse()).thenReturn(null);
 
-        assertThatThrownBy(() -> shoppingAgent.chat(message, CONVERSATION_ID))
+        assertThatThrownBy(() -> orderAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Agent didnt reply");
 

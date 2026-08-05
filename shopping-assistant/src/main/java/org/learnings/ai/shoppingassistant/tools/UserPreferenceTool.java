@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class UserPreferenceTool implements AgentTool {
+public class UserPreferenceTool implements ShoppingAgentTool, OrderAgentTool {
 
     private final UserMemoryService userMemoryService;
 

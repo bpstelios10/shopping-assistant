@@ -42,7 +42,7 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
     @Autowired
     private JsonMapper mapper;
-    // TODO maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
+    // task: maybe switch to org.testcontainers.ollama: https://www.baeldung.com/spring-ai-testing-ai-evaluators
     @MockitoBean
     private ChatClient routerChatClient;
     @MockitoBean
