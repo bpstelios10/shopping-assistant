@@ -34,26 +34,30 @@ public class AgentOrchestrator {
         CurrentUser.set(userId);
 
         try {
-            return route(message).chat(message, convId);
+            RouterAgent.RoutingPlan plan = routerAgent.route(message);
+            log.debug("route plan: [{}]", plan);
+
+            // task: handle the multiple decisions
+            RouterAgent.RoutingStep decision = plan.decisions().getFirst();
+
+            return getAgent(decision.agent(), decision.confidence())
+                    .chat(decision.task(), convId);
         } finally {
             CurrentUser.clear();
         }
     }
 
-    private Agent route(String message) {
-        RouterAgent.RoutingDecision decision = routerAgent.route(message);
-        log.debug("routing decision: {} ({})", decision.agent(), decision.confidence());
-
+    private Agent getAgent(RouterAgent.RoutingStep.AgentType agent, double confidence) {
         Agent fallbackAgent = agentsByName.get("shopping");
         if (fallbackAgent == null) {
             throw new IllegalStateException("No fallback 'shopping' agent configured");
         }
 
-        if (decision.confidence() < ROUTING_THRESHOLD) {
+        if (confidence < ROUTING_THRESHOLD) {
             return fallbackAgent;
         }
 
-        return agentsByName.getOrDefault(decision.agent().name().toLowerCase(), fallbackAgent);
+        return agentsByName.getOrDefault(agent.name().toLowerCase(), fallbackAgent);
     }
 
     private String resolveUserId() {

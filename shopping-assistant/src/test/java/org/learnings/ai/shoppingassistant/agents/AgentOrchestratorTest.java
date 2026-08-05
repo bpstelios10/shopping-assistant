@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingDecision.AgentType.SHOPPING;
-import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingDecision.AgentType.SUPPORT;
+import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SHOPPING;
+import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SUPPORT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -47,8 +47,10 @@ class AgentOrchestratorTest {
     @Test
     void chat_whenShoppingQuestion_routesToShoppingAgent() {
         ChatResponse expected = response("hello");
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SHOPPING, 0.9));
-        when(firstAgent.chat(eq("hi"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
+        RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
+                List.of(new RouterAgent.RoutingStep(SHOPPING, "hello", 0.9)));
+        when(routerAgent.route("hi")).thenReturn(plan);
+        when(firstAgent.chat(eq("hello"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
 
         ChatResponse actual = orchestrator.chat("hi", "conv-1");
 
@@ -59,8 +61,10 @@ class AgentOrchestratorTest {
     @Test
     void chat_whenSupportQuestion_routesToSupportAgent() {
         ChatResponse expected = response("hello");
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SUPPORT, 0.9));
-        when(secondAgent.chat(eq("hi"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
+        RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
+                List.of(new RouterAgent.RoutingStep(SUPPORT, "hello", 0.9)));
+        when(routerAgent.route("hi")).thenReturn(plan);
+        when(secondAgent.chat(eq("hello"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
 
         ChatResponse actual = orchestrator.chat("hi", "conv-1");
 
@@ -71,8 +75,10 @@ class AgentOrchestratorTest {
     @Test
     void chat_whenNotSure_defaultsToShoppingAgent() {
         ChatResponse expected = response("hello");
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SUPPORT, 0.5));
-        when(firstAgent.chat(eq("hi"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
+        RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
+                List.of(new RouterAgent.RoutingStep(SUPPORT, "hello", 0.5)));
+        when(routerAgent.route("hi")).thenReturn(plan);
+        when(firstAgent.chat(eq("hello"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
 
         ChatResponse actual = orchestrator.chat("hi", "conv-1");
 
@@ -83,7 +89,9 @@ class AgentOrchestratorTest {
     @Test
     void chat_whenFallbackAgentWrong_throwsException() {
         AgentOrchestrator badOrchestrator = new AgentOrchestrator(List.of(secondAgent), routerAgent);
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SUPPORT, 0.5));
+        RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
+                List.of(new RouterAgent.RoutingStep(SUPPORT, "hello", 0.5)));
+        when(routerAgent.route("hi")).thenReturn(plan);
 
         assertThatThrownBy(() -> badOrchestrator.chat("hi", "conv-1"))
                 .isInstanceOf(IllegalStateException.class)
@@ -94,7 +102,11 @@ class AgentOrchestratorTest {
     @Test
     void chat_whenBlankConversationId_generatesRandomId() {
         ArgumentCaptor<String> convId = ArgumentCaptor.forClass(String.class);
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SHOPPING, 0.9));
+        RouterAgent.RoutingPlan plan =
+                new RouterAgent.RoutingPlan(List.of(
+                        new RouterAgent.RoutingStep(SHOPPING, "hi", 0.9),
+                        new RouterAgent.RoutingStep(SUPPORT, "hi", 0.5)));
+        when(routerAgent.route("hi")).thenReturn(plan);
         when(firstAgent.chat(eq("hi"), convId.capture())).thenReturn(response("hello"));
 
         orchestrator.chat("hi", "  ");
@@ -108,7 +120,9 @@ class AgentOrchestratorTest {
     @Test
     void chat_setsCurrentUserDuringAgentCallAndClearsAfter() {
         AtomicReference<String> userDuringCall = new AtomicReference<>();
-        when(routerAgent.route("hi")).thenReturn(new RouterAgent.RoutingDecision(SHOPPING, 0.9));
+        RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
+                List.of(new RouterAgent.RoutingStep(SHOPPING, "hi",0.9)));
+        when(routerAgent.route("hi")).thenReturn(plan);
         when(firstAgent.chat(any(), any())).thenAnswer(_ -> {
             userDuringCall.set(CurrentUser.get());
             return response("hello");

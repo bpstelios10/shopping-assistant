@@ -2,11 +2,17 @@ package org.learnings.ai.shoppingassistant.agents;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.DefaultChatClient;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,23 +30,36 @@ class RouterAgentTest {
     @InjectMocks
     private RouterAgent routerAgent;
 
-    @Test
-    void route_whenShoppingMessage_returnsShoppingDecision() {
-        RouterAgent.RoutingDecision expected = getRoutingDecision("do you have red shoes?", RouterAgent.RoutingDecision.AgentType.SHOPPING, 0.92);
+    @ParameterizedTest
+    @MethodSource("provideAllRoutingDecisions")
+    void route_whenSingleDecisionPlan_returnsPlanWith1Decision(
+            String message, List<RouterAgent.RoutingStep> decisions) {
+        RouterAgent.RoutingStep expected = getRoutingDecision(message, decisions).decisions().getFirst();
 
-        RouterAgent.RoutingDecision decision = routerAgent.route("do you have red shoes?");
+        RouterAgent.RoutingPlan plan = routerAgent.route(message);
+        RouterAgent.RoutingStep decision = plan.decisions().getFirst();
 
         assertThat(decision).isSameAs(expected);
         verifyNoMoreInteractions(chatClient);
     }
 
     @Test
-    void route_whenSupportMessage_returnsSupportDecision() {
-        RouterAgent.RoutingDecision expected = getRoutingDecision("what is your refund policy?", RouterAgent.RoutingDecision.AgentType.SUPPORT, 0.88);
+    void route_whenMultipleDecisionPlan_returnsList() {
+        String message = "where is my order X? and what is your delivery policy?";
+        RouterAgent.RoutingPlan expectedPlan =
+                getRoutingDecision(message, List.of(
+                        new RouterAgent.RoutingStep(
+                                RouterAgent.RoutingStep.AgentType.ORDERS, "where is my order X?", 0.88),
+                        new RouterAgent.RoutingStep(
+                                RouterAgent.RoutingStep.AgentType.SUPPORT, "what is your delivery policy?", 0.89)));
 
-        RouterAgent.RoutingDecision decision = routerAgent.route("what is your refund policy?");
+        RouterAgent.RoutingPlan plan = routerAgent.route(message);
 
-        assertThat(decision).isSameAs(expected);
+        assertThat(plan.decisions()).hasSize(2);
+        RouterAgent.RoutingStep decision = plan.decisions().getFirst();
+        assertThat(decision).isSameAs(expectedPlan.decisions().getFirst());
+        decision = plan.decisions().get(1);
+        assertThat(decision).isSameAs(expectedPlan.decisions().get(1));
         verifyNoMoreInteractions(chatClient);
     }
 
@@ -58,15 +77,26 @@ class RouterAgentTest {
         verifyNoMoreInteractions(chatClient);
     }
 
-    private RouterAgent.RoutingDecision getRoutingDecision(String text, RouterAgent.RoutingDecision.AgentType shopping, double confidence) {
+    private static Stream<Arguments> provideAllRoutingDecisions() {
+        return Stream.of(
+                Arguments.of("do you have red shoes?", List.of(new RouterAgent.RoutingStep(
+                        RouterAgent.RoutingStep.AgentType.SHOPPING, "do you have red shoes?", 0.92))),
+                Arguments.of("what is your refund policy?", List.of(new RouterAgent.RoutingStep(
+                        RouterAgent.RoutingStep.AgentType.SUPPORT, "what is your refund policy?", 0.88))),
+                Arguments.of("where is my order X?", List.of(new RouterAgent.RoutingStep(
+                        RouterAgent.RoutingStep.AgentType.ORDERS, "where is my order X?", 0.9)))
+        );
+    }
+
+    private RouterAgent.RoutingPlan getRoutingDecision(String text, List<RouterAgent.RoutingStep> decisions) {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(chatClient.prompt()).thenReturn(requestSpec);
         when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.user(text)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec mockResponse = mock(ChatClient.CallResponseSpec.class);
         when(requestSpec.call()).thenReturn(mockResponse);
-        RouterAgent.RoutingDecision expected = new RouterAgent.RoutingDecision(shopping, confidence);
-        when(mockResponse.entity(eq(RouterAgent.RoutingDecision.class))).thenReturn(expected);
-        return expected;
+        RouterAgent.RoutingPlan expectedPlan = new RouterAgent.RoutingPlan(decisions);
+        when(mockResponse.entity(eq(RouterAgent.RoutingPlan.class))).thenReturn(expectedPlan);
+        return expectedPlan;
     }
 }

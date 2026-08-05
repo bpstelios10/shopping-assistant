@@ -3,6 +3,8 @@ package org.learnings.ai.shoppingassistant.agents;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class RouterAgent {
 
@@ -12,13 +14,20 @@ public class RouterAgent {
         this.chatClient = routerChatClient;
     }
 
-    public RoutingDecision route(String message) {
+    public RoutingPlan route(String message) {
         // task: later add some Cheap pre-filters, like hello messages, very obvious ones, block abuse, etc
         return chatClient.prompt()
                 .system("""
-                        You are a routing classifier for an online store.
+                        You are a routing planner for an online store.
                         
-                        Choose exactly one agent.
+                        Analyze the user's request and split it into one or more independent tasks.
+                        
+                        For each task:
+                        - Select the most appropriate agent.
+                        - Rewrite the task so it can be executed independently.
+                        - Assign a confidence between 0.0 and 1.0.
+                        
+                        Available agents:
                         
                         SHOPPING:
                         - Product search
@@ -40,15 +49,18 @@ public class RouterAgent {
                         - FAQs
                         - Store policies
                         
-                        Return only the selected agent and a confidence between 0.0 and 1.0.
+                        Return the tasks in execution order.
+                        Do not return duplicate tasks.
                         """)
                 .user(message)
                 .call()
-                .entity(RoutingDecision.class);
+                .entity(RoutingPlan.class);
     }
 
+    public record RoutingPlan(List<RoutingStep> decisions) {}
+
     // task: is there a value of adding reasoning here as well? as third param
-    public record RoutingDecision(AgentType agent, double confidence) {
+    public record RoutingStep(AgentType agent, String task, double confidence) {
         public enum AgentType {SHOPPING, ORDERS, SUPPORT}
     }
 }

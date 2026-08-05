@@ -29,7 +29,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingDecision.AgentType.SUPPORT;
+import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.ORDERS;
+import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SUPPORT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -51,23 +52,16 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
     void setUp() {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
-        var reqSpec = mock(ChatClient.ChatClientRequestSpec.class);
-        var callSpec = mock(ChatClient.CallResponseSpec.class);
-
-        when(routerChatClient.prompt()).thenReturn(reqSpec);
-        when(reqSpec.system(anyString())).thenReturn(reqSpec);
-        when(reqSpec.user(anyString())).thenReturn(reqSpec);
-        when(reqSpec.call()).thenReturn(callSpec);
-        when(callSpec.entity(RouterAgent.RoutingDecision.class))
-                .thenReturn(new RouterAgent.RoutingDecision(SUPPORT, 0.95));
     }
 
     @Test
     void chat_whenCorrectInput_returnsResponse() throws Exception {
+        String chatMessage = "some message";
+        mockModel(chatMessage);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
 
-        ChatController.CreateChat request = new ChatController.CreateChat("some message", "some-conversation-id");
+        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, "some-conversation-id");
 
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,6 +79,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
     @Test
     void chat_whenSameConversationId_sendsHistoryToModel() throws Exception {
+        String chatMessage1 = "what is your name";
+        String chatMessage2 = "what did i just ask";
+        mockModel(chatMessage1);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
@@ -92,17 +89,18 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         when(redisChatMemoryRepository.findByConversationId("anon:sess-abc:" + conversationId))
                 .thenReturn(List.of())
                 .thenReturn(List.of(
-                        new UserMessage("what is your name"),
+                        new UserMessage(chatMessage1),
                         new AssistantMessage("first response")
                 ));
 
-        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", conversationId);
+        ChatController.CreateChat first = new ChatController.CreateChat(chatMessage1, conversationId);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(first)))
                 .andExpect(status().isOk());
 
-        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", conversationId);
+        mockModel(chatMessage2);
+        ChatController.CreateChat second = new ChatController.CreateChat(chatMessage2, conversationId);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(second)))
@@ -120,7 +118,7 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         String secondPromptText = secondPrompt.getInstructions().stream()
                 .map(Message::getText)
                 .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(secondPromptText).contains("what is your name", "first response", "what did i just ask");
+        assertThat(secondPromptText).contains(chatMessage1, "first response", chatMessage2);
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
         verify(vectorStore, times(2)).similaritySearch(any(SearchRequest.class));
@@ -132,19 +130,23 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
     @Test
     void chat_whenDifferentConversationId_doesNotShareHistory() throws Exception {
+        String chatMessage1 = "what is your name";
+        String chatMessage2 = "what did i just ask";
+        mockModel(chatMessage1);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
 
         String conversationId1 = UUID.randomUUID().toString();
         String conversationId2 = UUID.randomUUID().toString();
-        ChatController.CreateChat first = new ChatController.CreateChat("what is your name", conversationId1);
+        ChatController.CreateChat first = new ChatController.CreateChat(chatMessage1, conversationId1);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(first)))
                 .andExpect(status().isOk());
 
-        ChatController.CreateChat second = new ChatController.CreateChat("what did i just ask", conversationId2);
+        mockModel(chatMessage2);
+        ChatController.CreateChat second = new ChatController.CreateChat(chatMessage2, conversationId2);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(second)))
@@ -163,7 +165,7 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
                 .map(Message::getText)
                 .collect(java.util.stream.Collectors.joining("\n"));
         assertThat(secondPromptText)
-                .doesNotContain("what is your name", "first response");
+                .doesNotContain(chatMessage1, "first response");
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
         verify(vectorStore, times(2)).similaritySearch(any(SearchRequest.class));
@@ -177,6 +179,8 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
     @Test
     void chat_whenRelevantDocsExist_injectsRetrievedContextIntoPrompt() throws Exception {
+        String chatMessage = "what is your return policy";
+        mockModel(chatMessage);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
         // RAG advisor consults the vector store; return a known chunk so we can assert it is injected.
@@ -184,7 +188,7 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
                 .thenReturn(List.of(new Document("RETRIEVED_RETURN_POLICY_CHUNK")));
 
         String conversationId = "rag-" + UUID.randomUUID();
-        ChatController.CreateChat request = new ChatController.CreateChat("what is your return policy", conversationId);
+        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, conversationId);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
@@ -228,7 +232,10 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         }).when(redisChatMemoryRepository).saveAll(any(String.class), any(List.class));
 
         for (int i = 1; i <= 10; i++) {
-            ChatController.CreateChat request = new ChatController.CreateChat("msg-" + i, conversationId);
+            String chatMessage = "msg-" + i;
+            mockModel(chatMessage);
+
+            ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, conversationId);
             mockMvc.perform(post("/chat")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(mapper.writeValueAsString(request)))
@@ -257,6 +264,8 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
     @Test
     void chat_whenUserProfileExists_injectsUserContextIntoPrompt() throws Exception {
+        String chatMessage = "what is your return policy";
+        mockModel(chatMessage);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
         when(userMemoryRepository.findById("anon:sess-abc"))
@@ -264,7 +273,7 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
         UUID conversationId = UUID.randomUUID();
         ChatController.CreateChat request =
-                new ChatController.CreateChat("do you have jackets?", "profile-" + conversationId);
+                new ChatController.CreateChat(chatMessage, "profile-" + conversationId);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
@@ -285,5 +294,19 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
         verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+    }
+
+    private void mockModel(String message) {
+        var reqSpec = mock(ChatClient.ChatClientRequestSpec.class);
+        var callSpec = mock(ChatClient.CallResponseSpec.class);
+
+        when(routerChatClient.prompt()).thenReturn(reqSpec);
+        when(reqSpec.system(anyString())).thenReturn(reqSpec);
+        when(reqSpec.user(message)).thenReturn(reqSpec);
+        when(reqSpec.call()).thenReturn(callSpec);
+        when(callSpec.entity(RouterAgent.RoutingPlan.class))
+                .thenReturn(new RouterAgent.RoutingPlan(List.of(
+                        new RouterAgent.RoutingStep(SUPPORT, message, 0.95)
+                )));
     }
 }
