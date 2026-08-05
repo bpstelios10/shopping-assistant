@@ -1,20 +1,24 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
+import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.learnings.ai.shoppingassistant.services.orders.OrderClient;
-import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.sql.DataSource;
 
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+@Import(TestRestClientConfig.class)
 public abstract class AbstractComponentTestWithMockedExternals {
 
     @MockitoBean
@@ -28,9 +32,10 @@ public abstract class AbstractComponentTestWithMockedExternals {
 
     @Autowired
     MockMvc mockMvc;
-    // Mock the product backend so the context doesn't need the real Go service.
-    @MockitoBean
-    ProductClient productClient;
-    @MockitoBean
-    OrderClient orderClient;
+    @Autowired
+    MockRestServiceServer server;
+
+    void verifyNoMoreSuperClassMocksInteractions() {
+        verifyNoMoreInteractions(vectorStore, redisChatMemoryRepository, userMemoryRepository);
+    }
 }

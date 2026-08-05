@@ -16,9 +16,11 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.client.ExpectedCount;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
@@ -30,6 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SHOPPING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,6 +54,13 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
     @BeforeEach
     void setUp() {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+
+        server.reset();
+        server.expect(ExpectedCount.max(1), requestTo("http://shopping-assistant/products/categories"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        ["MAGNET","POSTCARD","ACCESSORY","JEWELRY","CLOTHES"]
+                        """, MediaType.APPLICATION_JSON));
     }
 
     @Test
@@ -67,11 +79,12 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
                 .andExpect(jsonPath("$.generations[0].text").value("some response"));
         verify(chatModel).getOptions();
         verify(chatModel).call(any(Prompt.class));
-        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:some-conversation-id");
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:some-conversation-id"), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -118,11 +131,12 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
         assertThat(secondPromptText).contains(chatMessage1, "first response", chatMessage2);
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
-        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -165,13 +179,14 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
                 .doesNotContain(chatMessage1, "first response");
         verify(chatModel, times(2)).getOptions();
         verify(chatModel, times(2)).call(any(Prompt.class));
-        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId1);
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId2);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId1), any());
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId2), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @SuppressWarnings("unchecked")
@@ -217,11 +232,12 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
         assertThat(rawTexts).hasSize(10).contains("msg-10").doesNotContain("msg-1");
         verify(chatModel, times(10)).getOptions();
         verify(chatModel, times(11)).call(any(Prompt.class));
-        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(30)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(20)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(10)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(10)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -251,11 +267,12 @@ public class ShoppingAgentComponentTest extends AbstractComponentTestWithMockedE
                 .contains("currency=EUR").contains("size=M");
         verify(chatModel).getOptions();
         verify(chatModel).call(any(Prompt.class));
-        verify(productClient, atMostOnce()).getAllCategories();
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:profile-" + conversationId);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     private void mockModel(String message) {

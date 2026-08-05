@@ -50,7 +50,7 @@ public class PrivateEndpointsComponentTest extends AbstractComponentTestWithMock
     // Uncomment when add test containers. no point to do healthcheck for mocked dependencies
 //    @Test
 //    void getActuatorHealth() throws Exception {
-//        ]mockMvc.perform(get("/shopping-assistant/private/health"))
+//        mockMvc.perform(get("/shopping-assistant/private/health"))
 //                .andExpect(status().isOk())
 //                .andExpect(jsonPath("$['status']").value("UP"))
 //                .andExpect(content().string(containsString("liveness")))

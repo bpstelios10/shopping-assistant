@@ -29,7 +29,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.ORDERS;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SUPPORT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -74,7 +73,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:some-conversation-id"), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
         verify(vectorStore).similaritySearch(any(SearchRequest.class));
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -125,7 +126,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -174,7 +177,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId1), any());
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId2), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -209,7 +214,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
         verify(vectorStore).similaritySearch(any(SearchRequest.class));
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @SuppressWarnings("unchecked")
@@ -259,7 +266,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(30)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(20)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(10)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(10)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -293,7 +302,9 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:profile-" + conversationId);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     private void mockModel(String message) {

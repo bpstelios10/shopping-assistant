@@ -7,3 +7,10 @@ management:
 spring:
   flyway:
     enabled: false
+
+clients:
+  services:
+    products:
+      base-url: http://shopping-assistant
+    orders:
+      base-url: http://shopping-assistant

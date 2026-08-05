@@ -9,6 +9,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -16,6 +17,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,9 +30,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.ORDERS;
-import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SHOPPING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -69,7 +73,9 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:some-conversation-id");
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:some-conversation-id"), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, orderClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -119,7 +125,9 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, orderClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -167,7 +175,9 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId1), any());
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId2), any());
         verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, orderClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(2)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @SuppressWarnings("unchecked")
@@ -216,7 +226,9 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verify(redisChatMemoryRepository, times(30)).findByConversationId("anon:sess-abc:" + conversationId);
         verify(redisChatMemoryRepository, times(20)).saveAll(eq("anon:sess-abc:" + conversationId), any());
         verify(userMemoryRepository, times(10)).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, orderClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient, times(10)).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     @Test
@@ -249,7 +261,59 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:profile-" + conversationId);
         verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
         verify(userMemoryRepository).findById("anon:sess-abc");
-        verifyNoMoreInteractions(chatModel, productClient, orderClient, vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
+    }
+
+    @Test
+    void chat_whenModelRequestsGetOrderById_executesOrderTool() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        String chatMessage = "what is the status of order " + orderId + "?";
+        mockModel(chatMessage);
+        server.expect(requestTo("http://shopping-assistant/orders/" + orderId))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        {
+                          "id":"%s",
+                          "product_id":"prod-123",
+                          "quantity":2,
+                          "status":"PAID"
+                        }
+                        """.formatted(orderId), MediaType.APPLICATION_JSON));
+
+        AssistantMessage.ToolCall toolCall =
+                new AssistantMessage.ToolCall("call-1", "function", "getOrderById",
+                        "{\"orderId\":\"" + orderId + "\"}");
+        when(chatModel.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(AssistantMessage.builder()
+                        .content("")
+                        .toolCalls(List.of(toolCall))
+                        .build()))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("your order is paid")))));
+
+        String conversationId = "tool-call-conversation";
+        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, conversationId);
+
+        mockMvc.perform(post("/chat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.generations[0].text").value("your order is paid"));
+
+        server.verify();
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(promptCaptor.capture());
+        ToolResponseMessage toolResponseMessage = (ToolResponseMessage) (promptCaptor.getAllValues().get(1).getInstructions().get(1));
+        assertThat(toolResponseMessage.getResponses())
+                .anyMatch(response -> response.responseData().contains("prod-1"));
+        verify(chatModel).getOptions();
+        verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
+        verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
+        verify(userMemoryRepository).findById("anon:sess-abc");
+        verify(routerChatClient).prompt();
+        verifyNoMoreSuperClassMocksInteractions();
+        verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
     private void mockModel(String message) {

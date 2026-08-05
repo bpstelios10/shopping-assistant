@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.learnings.ai.shoppingassistant.config.TestCacheConfig;
 import org.learnings.ai.shoppingassistant.domain.Product;
 import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
+import org.learnings.ai.shoppingassistant.services.products.ProductClient;
 import org.learnings.ai.shoppingassistant.services.products.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -12,6 +13,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 import java.util.List;
@@ -33,6 +35,8 @@ public class CachingComponentTest extends AbstractComponentTestWithMockedExterna
     ProductService productService;
     @Autowired
     CacheManager cacheManager;
+    @MockitoBean
+    private ProductClient productClient;
 
     @BeforeEach
     void cleanCache() {
