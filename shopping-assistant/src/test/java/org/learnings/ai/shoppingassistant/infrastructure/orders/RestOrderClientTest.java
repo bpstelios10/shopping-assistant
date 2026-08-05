@@ -38,7 +38,7 @@ class RestOrderClientTest {
         String responseBody = """
                 {
                   "id": "%s",
-                  "productId": "%s",
+                  "product_id": "%s",
                   "quantity": %d,
                   "status": "%s"
                 }
