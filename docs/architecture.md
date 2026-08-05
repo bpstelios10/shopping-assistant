@@ -115,12 +115,21 @@ several agents per request.
 
 ```text
 User
-   │
-   ▼
-Planner / Orchestrator
-   ├── Shopping Agent
-   ├── Order Agent
-   └── Support Agent
+  │
+  ▼
+Agent Orchestrator
+  │
+  ▼
+Router Agent
+  ├──► Shopping Agent ───► Products API
+  ├──► Orders Agent ─────► Orders API
+  └──► Support Agent ────► Vector Store (RAG)
+             │
+             ▼
+      Agent Orchestrator
+             │
+             ▼
+       Final Response
 ```
 
-The planner decides which agent (or agents) should execute the user's request.
+The planner uses the Router to decide which agent (or agents) should execute the user's request.

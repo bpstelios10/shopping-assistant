@@ -69,9 +69,9 @@ public class AiConfig {
     @Bean
     ChatClient routerChatClient(ChatModel chatModel) {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
-                // TODO could use a lighter model for routing. also make these values configurable
+                .model("qwen2.5:3b-instruct")
                 .temperature(0.0)
-//                .maxTokens(1000)
+                .maxTokens(100) // it only consumes 22 tokens fixed right now
                 ;
 
         return ChatClient

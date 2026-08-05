@@ -3,8 +3,6 @@ package org.learnings.ai.shoppingassistant.agents;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
 
-// TODO this agent consumes WAY TOO MANY tokens. this is probably cause i use qwen when there is no reason for
-// over-explanations and over-thinking etc. OR it could be cause of the structured response. or both... investigate
 @Component
 public class RouterAgent {
 
@@ -15,7 +13,7 @@ public class RouterAgent {
     }
 
     public RoutingDecision route(String message) {
-        // TODO later add some Cheap pre-filters, like hello messages, very obvious ones, block abuse, etc
+        // task: later add some Cheap pre-filters, like hello messages, very obvious ones, block abuse, etc
         return chatClient.prompt()
                 .system("""
                         You are a routing classifier for an online store.
@@ -49,7 +47,7 @@ public class RouterAgent {
                 .entity(RoutingDecision.class);
     }
 
-    // TODO is there a value of adding reasoning here as well? as third param
+    // task: is there a value of adding reasoning here as well? as third param
     public record RoutingDecision(AgentType agent, double confidence) {
         public enum AgentType {SHOPPING, ORDERS, SUPPORT}
     }

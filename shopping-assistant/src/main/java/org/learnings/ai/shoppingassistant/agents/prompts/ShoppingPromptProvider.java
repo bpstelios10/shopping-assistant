@@ -13,8 +13,6 @@ import java.util.Map;
 
 import static java.time.LocalDate.now;
 
-// TODO i need to externalize this later. prompts often change, so it is more flexible to be
-//  in a versioned prompt-management system (editable, A/B-tested, and rolled out without redeploying the service)
 @Service
 public class ShoppingPromptProvider extends AbstractPromptProvider implements PromptProvider {
 

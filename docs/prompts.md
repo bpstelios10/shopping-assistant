@@ -6,6 +6,7 @@ Short notes on where prompts live and how they're built.
 
 - System prompt templates: `src/main/resources/prompts/`
   - `shopping-system.st` — shopping agent (product discovery, tool-aware).
+  - `order-system.st` — orders agent (order discovery, tool-aware).
   - `support-system.st` — support agent (policy/FAQ, RAG-grounded).
 
 ## Composition
