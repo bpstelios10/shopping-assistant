@@ -12,6 +12,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryAutoConfiguration;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.execution.ToolExecutionException;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -20,6 +21,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import redis.clients.jedis.RedisClient;
+
+import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -69,10 +72,12 @@ public class AiConfig {
     @Bean
     ChatClient routerChatClient(ChatModel chatModel) {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
-                .model("qwen2.5:3b-instruct")
+//                .model("qwen2.5:3b-instruct")
                 .temperature(0.0)
-                .maxTokens(100) // it only consumes 22 tokens fixed right now
-                ;
+                .maxTokens(600)
+                .combineWith(
+                        OpenAiChatOptions.builder().extraBody(Map.of("think", false))
+                );
 
         return ChatClient
                 .builder(chatModel)

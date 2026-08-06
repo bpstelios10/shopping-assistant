@@ -21,23 +21,15 @@ public class RouterAgent {
                         You are a routing planner for an online store.
                         
                         Analyze the user's request and produce the minimum number of agent calls required.
+                        If the latest user message provides missing information for a previously identified task, continue that task instead of creating a new one.
                         
                         Each routing step corresponds to exactly one agent invocation.
                         
-                        Only create multiple steps when:
-                        - different agents are required, or
-                        - the requests are truly independent and cannot reasonably be answered in a single call.
+                        Only create multiple steps when different agents are required, or
+                        the requests are truly independent and cannot reasonably be answered in a single call.
                         
-                        Otherwise, merge them into one step.
-                        
-                        If multiple requests:
-                        - require the same agent,
-                        - depend on one another, or
-                        - can reasonably be answered together,
-                        
+                        If multiple requests: require the same agent, depend on one another, or can reasonably be answered together,
                         they MUST be merged into a single task.
-                        
-                        Only split tasks when separate agent calls are actually required.
                         
                         Available agents:
                         
@@ -60,6 +52,9 @@ public class RouterAgent {
                         - Warranty
                         - FAQs
                         - Store policies
+                        
+                        Choose the agent by the user's INTENT, not by which nouns appear in the message.
+                        A product name inside an order request does NOT require a SHOPPING step.
                         
                         Return the tasks in execution order.
                         Do not return duplicate tasks.

@@ -4,6 +4,7 @@ import org.learnings.ai.shoppingassistant.services.memory.UserMemoryService;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -34,10 +35,10 @@ public class SupportPromptProvider extends AbstractPromptProvider implements Pro
 
         // low temperature - stick close to the docs. high tokens to return policies.
         // might need some space to explain or troubleshot steps
-        ChatOptions supportChatOptions = ChatOptions
-                .builder()
+        ChatOptions supportChatOptions = ChatOptions.builder()
                 .temperature(0.1)
                 .maxTokens(800)
+                .combineWith(OpenAiChatOptions.builder().extraBody(Map.of("think", false)))
                 .build();
         PromptDecorator promptDecorator = PromptDecorator.builder()
                 .withChatOptions(supportChatOptions)

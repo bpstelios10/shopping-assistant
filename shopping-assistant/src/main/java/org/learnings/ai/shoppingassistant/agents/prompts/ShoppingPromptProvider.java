@@ -40,8 +40,7 @@ public class ShoppingPromptProvider extends AbstractPromptProvider implements Pr
 
         // low temperature - stick close to tool. but with some more flexibility for interpreting product questions.
         // might need some space for long descriptions or return multiple products
-        ChatOptions shoppingChatOptions = ChatOptions
-                .builder()
+        ChatOptions shoppingChatOptions = ChatOptions.builder()
                 .temperature(0.2)
                 .maxTokens(1500)
                 .build();
