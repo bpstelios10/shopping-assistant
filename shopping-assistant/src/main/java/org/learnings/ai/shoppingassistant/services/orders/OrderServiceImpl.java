@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.services.orders;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.learnings.ai.shoppingassistant.domain.Order;
 import org.springframework.stereotype.Service;
 
@@ -19,4 +20,11 @@ public class OrderServiceImpl implements OrderService {
     public Optional<Order> getOrderById(UUID orderId) {
         return orderClient.getOrderById(orderId);
     }
+
+    @Override
+    public Order createOrder(CreateOrderRequest request) {
+        return orderClient.createOrder(request);
+    }
+
+    public record CreateOrderRequest(@JsonProperty("product_id") String productId, int quantity) { }
 }

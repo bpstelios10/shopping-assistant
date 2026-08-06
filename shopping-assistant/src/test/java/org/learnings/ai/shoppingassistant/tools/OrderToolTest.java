@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.learnings.ai.shoppingassistant.domain.Order;
 import org.learnings.ai.shoppingassistant.domain.OrderStatus;
 import org.learnings.ai.shoppingassistant.services.orders.OrderService;
+import org.learnings.ai.shoppingassistant.services.orders.OrderServiceImpl;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,6 +46,19 @@ class OrderToolTest {
 
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(order);
+        verifyNoMoreInteractions(orderService);
+    }
+
+    @Test
+    void createOrder_sendsRequestToService() {
+        UUID orderId = UUID.randomUUID();
+        Order order = new Order(orderId, "some-product-id", 1, OrderStatus.CREATED);
+        OrderServiceImpl.CreateOrderRequest request = new OrderServiceImpl.CreateOrderRequest(order.productId(), order.quantity());
+        when(orderService.createOrder(request)).thenReturn(order);
+
+        Order result = orderTool.createOrder(request);
+
+        assertThat(result).isEqualTo(order);
         verifyNoMoreInteractions(orderService);
     }
 }

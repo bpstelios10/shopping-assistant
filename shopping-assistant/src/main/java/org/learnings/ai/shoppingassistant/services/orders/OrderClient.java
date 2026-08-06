@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface OrderClient {
 
     Optional<Order> getOrderById(UUID orderId);
+
+    Order createOrder(OrderServiceImpl.CreateOrderRequest request);
 }

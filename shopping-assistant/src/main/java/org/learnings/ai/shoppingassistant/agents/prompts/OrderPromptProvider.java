@@ -34,10 +34,9 @@ public class OrderPromptProvider extends AbstractPromptProvider implements Promp
 
         // low temperature - stick close to tool. Extract parameters, call tool, report facts.
         // low tokens too. Short factual responses.
-        ChatOptions orderChatOptions = ChatOptions
-                .builder()
+        ChatOptions orderChatOptions = ChatOptions.builder()
                 .temperature(0.1)
-                .maxTokens(400)
+                .maxTokens(600)
                 .build();
         PromptDecorator promptDecorator = PromptDecorator
                 .builder()

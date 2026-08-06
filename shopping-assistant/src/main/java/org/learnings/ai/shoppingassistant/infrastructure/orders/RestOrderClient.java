@@ -3,6 +3,7 @@ package org.learnings.ai.shoppingassistant.infrastructure.orders;
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.domain.Order;
 import org.learnings.ai.shoppingassistant.services.orders.OrderClient;
+import org.learnings.ai.shoppingassistant.services.orders.OrderServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
@@ -34,20 +35,28 @@ public class RestOrderClient implements OrderClient {
                         return Optional.empty();
                     }
 
-//                    if (status.isError()) {
-//                        throw new RestClientResponseException(
-//                                "Request failed with status " + status,
-//                                status.value(),
-//                                response.getStatusText(),
-//                                response.getHeaders(),
-//                                response.getBody().readAllBytes(),
-//                                StandardCharsets.UTF_8
-//                        );
-//                    }
+                    // handle exceptions. use JsonProperty required as well
 
                     return Optional
                             .ofNullable(response.bodyTo(OrderClientResponse.class))
                             .map(OrderClientResponse::toDomain);
+                });
+    }
+
+    @Override
+    public Order createOrder(OrderServiceImpl.CreateOrderRequest request) {
+        log.debug("making a request to create order with body: [{}]", request);
+
+        return restClient.post()
+                .uri("/orders")
+                .body(request)
+                .exchange((_, response) -> {
+                    HttpStatusCode status = response.getStatusCode();
+                    log.debug("client replied with status: [{}]", status);
+
+                    return Optional.ofNullable(response.bodyTo(OrderClientResponse.class))
+                            .map(OrderClientResponse::toDomain)
+                            .orElseThrow(() -> new RuntimeException("Failed to create order, response body is null"));
                 });
     }
 }

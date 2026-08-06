@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface OrderService {
 
     Optional<Order> getOrderById(UUID orderId);
+
+    Order createOrder(OrderServiceImpl.CreateOrderRequest request);
 }
