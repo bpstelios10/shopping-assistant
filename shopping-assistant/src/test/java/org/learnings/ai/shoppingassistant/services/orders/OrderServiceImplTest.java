@@ -47,4 +47,17 @@ class OrderServiceImplTest {
                 .contains(order);
         verifyNoMoreInteractions(orderClient);
     }
+
+    @Test
+    void createOrder_delegatesToClient() {
+        UUID orderId = UUID.randomUUID();
+        Order order = new Order(orderId, "some-product-id", 1, OrderStatus.CREATED);
+        OrderServiceImpl.CreateOrderRequest request = new OrderServiceImpl.CreateOrderRequest(order.productId(), order.quantity());
+        when(orderClient.createOrder(request)).thenReturn(order);
+
+        Order result = orderService.createOrder(request);
+
+        assertThat(result).isEqualTo(order);
+        verifyNoMoreInteractions(orderClient);
+    }
 }

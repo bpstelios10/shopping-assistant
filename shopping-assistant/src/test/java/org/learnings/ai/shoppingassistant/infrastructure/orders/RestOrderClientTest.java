@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
@@ -123,5 +124,31 @@ class RestOrderClientTest {
 
         server.verify();
         assertThat(response).isEqualTo(order);
+    }
+
+    @Test
+    void createOrder_whenResponseIsEmpty_throws() {
+        UUID orderId = UUID.randomUUID();
+        Order order = new Order(orderId, "some-product-id", 1, OrderStatus.CREATED);
+
+        String requestBody = """
+                {
+                  "product_id": "%s",
+                  "quantity": %d,
+                }
+                """.formatted(order.productId(), order.quantity());
+
+        server.expect(requestTo("http://orders/orders"))
+                .andExpect(method(POST))
+                .andExpect(content().json(requestBody))
+                .andExpect(header(CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                .andRespond(withStatus(HttpStatus.CREATED));
+
+        OrderServiceImpl.CreateOrderRequest request = new OrderServiceImpl.CreateOrderRequest(order.productId(), order.quantity());
+        assertThatThrownBy(() -> orderClient.createOrder(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to create order, response body is null");
+
+        server.verify();
     }
 }
