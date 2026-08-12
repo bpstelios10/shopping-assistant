@@ -35,7 +35,7 @@ public class RestOrderClient implements OrderClient {
                         return Optional.empty();
                     }
 
-                    // handle exceptions. use JsonProperty required as well
+                    // task: handle exceptions. use JsonProperty required as well
 
                     return Optional
                             .ofNullable(response.bodyTo(OrderClientResponse.class))

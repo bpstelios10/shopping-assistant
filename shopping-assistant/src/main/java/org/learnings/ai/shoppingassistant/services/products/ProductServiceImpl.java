@@ -6,6 +6,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -20,6 +22,11 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable("all-products")
     public List<Product> getAllProducts() {
         return productClient.getAllProducts();
+    }
+
+    @Override
+    public Optional<Product> getProductById(UUID productId) {
+        return productClient.getProductById(productId);
     }
 
     @Override

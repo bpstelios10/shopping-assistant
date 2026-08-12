@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,28 @@ class ProductToolTest {
         List<Product> result = productTool.listAllProducts();
 
         assertThat(result).isEqualTo(PRODUCTS);
+    }
+
+    @Test
+    void getProductById_whenExistingProduct_returnsProduct() {
+        Product existingProduct = PRODUCTS.getFirst();
+        when(productService.getProductById(existingProduct.id())).thenReturn(Optional.of(existingProduct));
+
+        Optional<Product> result = productTool.getProductById(existingProduct.id());
+
+        assertThat(result)
+                .isNotEmpty()
+                .hasValue(existingProduct);
+    }
+
+    @Test
+    void getProductById_whenNonExistingProduct_returnsEmpty() {
+        UUID nonExistingProductId = UUID.randomUUID();
+        when(productService.getProductById(nonExistingProductId)).thenReturn(Optional.empty());
+
+        Optional<Product> result = productTool.getProductById(nonExistingProductId);
+
+        assertThat(result).isEmpty();
     }
 
     @Test

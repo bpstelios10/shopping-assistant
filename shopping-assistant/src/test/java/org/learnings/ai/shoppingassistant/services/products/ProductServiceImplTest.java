@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +44,31 @@ class ProductServiceImplTest {
         List<Product> allProducts = productService.getAllProducts();
 
         assertThat(allProducts).isEmpty();
+        verifyNoMoreInteractions(productClient);
+    }
+
+    @Test
+    void getProductById_whenProductExists_returnsProduct() {
+        Product existingProduct = PRODUCTS.getFirst();
+        when(productClient.getProductById(existingProduct.id())).thenReturn(Optional.of(existingProduct));
+
+        Optional<Product> result = productService.getProductById(existingProduct.id());
+
+        assertThat(result)
+                .isNotEmpty()
+                .hasValue(existingProduct);
+
+        verifyNoMoreInteractions(productClient);
+    }
+
+    @Test
+    void getProductById_whenProductNotExists_returnsEmpty() {
+        UUID nonExistingProductId = UUID.randomUUID();
+        when(productClient.getProductById(nonExistingProductId)).thenReturn(Optional.empty());
+
+        Optional<Product> result = productService.getProductById(nonExistingProductId);
+
+        assertThat(result).isEmpty();
         verifyNoMoreInteractions(productClient);
     }
 

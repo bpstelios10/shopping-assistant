@@ -10,6 +10,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpMethod.GET;
@@ -17,6 +19,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestToUriTemplate;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class RestProductClientTest {
@@ -72,6 +75,45 @@ class RestProductClientTest {
                 .andRespond(withSuccess());
 
         List<Product> products = productClient.getAllProducts();
+
+        assertThat(products).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void getProductById_whenProductServiceReturnsProducts_returnsProduct() {
+        server.expect(requestTo("http://products/products/11111111-1111-1111-1111-111111111111"))
+                .andExpect(method(GET))
+                .andRespond(withSuccess("""
+                        {"id":"11111111-1111-1111-1111-111111111111","name":"Espresso Maker","category":"kitchen","price":45.0}
+                        """, MediaType.APPLICATION_JSON));
+
+        Optional<Product> product = productClient.getProductById(UUID.fromString("11111111-1111-1111-1111-111111111111"));
+
+        assertThat(product).isNotEmpty()
+                .get()
+                .satisfies(p -> {
+                    assertThat(p.name()).isEqualTo("Espresso Maker");
+                    assertThat(p.category()).isEqualTo("kitchen");
+                    assertThat(p.price()).isEqualTo(45.0F);
+                });
+        server.verify();
+    }
+
+    @Test
+    void getProductById_whenProductNotFound_returnsEmpty() {
+        String responseBody = """
+                {
+                  "Code": "PRODUCT_NOT_FOUND",
+                  "Message": "Some message"
+                }
+                """;
+
+        server.expect(requestTo("http://products/products/11111111-1111-1111-1111-111111111111"))
+                .andExpect(method(GET))
+                .andRespond(withResourceNotFound().body(responseBody));
+
+        Optional<Product> products = productClient.getProductById(UUID.fromString("11111111-1111-1111-1111-111111111111"));
 
         assertThat(products).isEmpty();
         server.verify();

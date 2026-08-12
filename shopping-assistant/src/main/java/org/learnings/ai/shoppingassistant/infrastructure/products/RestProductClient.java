@@ -5,10 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.domain.Product;
 import org.learnings.ai.shoppingassistant.domain.ProductSearchCriteria;
 import org.learnings.ai.shoppingassistant.services.products.ProductClient;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 // task: add exception handling
 @Slf4j
@@ -34,10 +38,32 @@ public class RestProductClient implements ProductClient {
     }
 
     @Override
+    public Optional<Product> getProductById(UUID productId) {
+        log.debug("making a get-by-id request to '/products/{id}' with id [{}]", productId);
+
+        return restClient.get()
+                .uri("/products/{id}", productId)
+                .exchange((_, response) -> {
+                    HttpStatusCode status = response.getStatusCode();
+                    log.debug("client replied with status: [{}]", status);
+
+                    if (status.isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                        return Optional.empty();
+                    }
+
+                    // task: handle exceptions...
+
+                    return Optional
+                            .ofNullable(response.bodyTo(ProductClientResponse.class))
+                            .map(ProductClientResponse::toDomain);
+                });
+    }
+
+    @Override
     public @Nonnull List<Product> search(ProductSearchCriteria criteria) {
         log.debug("making a search request to '/products/search' with criteria [{}]", criteria);
 
-        ProductClientResponse[] response = restClient.get()
+        RestClient.ResponseSpec retrieve = restClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.path("/products/search");
                     if (criteria.query() != null) {
@@ -51,8 +77,9 @@ public class RestProductClient implements ProductClient {
                     }
                     return uriBuilder.build();
                 })
-                .retrieve()
-                .body(ProductClientResponse[].class);
+                .retrieve();
+
+        ProductClientResponse[] response = retrieve.body(ProductClientResponse[].class);
         log.debug("client found products: [{}]", Arrays.toString(response));
 
         return toDomain(response);

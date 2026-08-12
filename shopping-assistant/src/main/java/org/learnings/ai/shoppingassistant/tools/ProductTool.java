@@ -8,6 +8,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class ProductTool implements ShoppingAgentTool {
@@ -22,6 +24,13 @@ public class ProductTool implements ShoppingAgentTool {
             + "Use this when the shopper wants to browse or asks to see all products.")
     public List<Product> listAllProducts() {
         return productService.getAllProducts();
+    }
+
+    @Tool(description = "Retrieve a product by its unique product ID. " +
+            "Use this tool whenever the user asks about a product of a specific ID.")
+    public Optional<Product> getProductById(
+            @ToolParam(description = "The unique UUID of the order.") UUID productId) {
+        return productService.getProductById(productId);
     }
 
     @Tool(description = "Search the store's catalog for products matching the shopper's request. "

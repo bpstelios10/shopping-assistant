@@ -15,9 +15,20 @@ This project is intentionally built to demonstrate practical Spring AI knowledge
 
 ## Implementation Details (Low-Level)
 
-Under the hood, the assistant uses `RouterAgent` + `AgentOrchestrator`, confidence-based fallback routing (`0.6`), Redis summary-buffer chat memory (`window=10`, `buffer=20`, `TTL=14d`), Postgres `jsonb` user memory, RAG advisor settings (`topK=4`, `similarityThreshold=0.5`), and graceful tool-failure handling via `ToolExecutionExceptionProcessor`.
+Current implementation:
 
-Current constraints: routing executes the first decision only (not full multi-step plans yet), user identity is still placeholder-based (`anon:sess-abc`), streaming is not enabled yet, and token accounting does not yet aggregate router + final-agent usage into one response summary.
+- **Routing:** `RouterAgent` + `AgentOrchestrator` with fallback threshold `0.6`.
+- **Conversation memory:** Redis summary-buffer (`window=10`, `buffer=20`, `TTL=14d`).
+- **User memory:** durable Postgres `jsonb` profile.
+- **RAG tuning:** `topK=4`, `similarityThreshold=0.5`.
+- **Tool resilience:** graceful failure handling via `ToolExecutionExceptionProcessor`.
+
+Current constraints:
+
+- Only the first planned routing decision is executed (full multi-step execution pending).
+- User identity is still placeholder-based (`anon:sess-abc`).
+- Streaming is not enabled yet.
+- Token accounting does not yet aggregate router + final-agent usage into one response summary.
 
 ## Next Milestones
 
