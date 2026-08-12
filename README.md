@@ -6,12 +6,12 @@ microservice architecture.
 The goal of this project is not only to integrate an LLM into an application, but also to understand how
 production-ready AI assistants are designed and implemented.
 
-## Vision
+## Features
 
-The assistant will evolve from a simple chatbot into an autonomous **LLM Agent** capable of interacting with other
-services, retrieving knowledge, and maintaining conversational context.
+The assistant is built as an autonomous **LLM Agent** that interacts with services, retrieves knowledge, and
+maintains conversational context.
 
-The project will gradually introduce the core building blocks of modern AI applications:
+We have (or are completing) all core building blocks of a modern AI application:
 
 - 🧠 **LLM Agent** – autonomous reasoning and decision making
 - 🛠️ **Tool Calling** – invoke APIs and business logic (Products, Orders, etc.)
@@ -22,6 +22,9 @@ The project will gradually introduce the core building blocks of modern AI appli
 - 🔍 **Observability** – prompts, tool calls, latency and metrics
 - 🤖 **Model Agnostic Design** – support multiple inference providers (Ollama, vLLM, OpenAI-compatible APIs)
 
+The shopping assistant is already using these features in practice.
+Implementation details and remaining work are tracked in the roadmap: `docs/roadmap.md`.
+
 ## Architecture
 
 ```text
@@ -29,7 +32,7 @@ The project will gradually introduce the core building blocks of modern AI appli
                      │
         ┌────────────┴────────────┐
         │                         │
-   Products Service         Orders Service
+   Products GO Service         Orders GO Service
               \             /
                \           /
                 Shopping Assistant
@@ -43,78 +46,23 @@ The project will gradually introduce the core building blocks of modern AI appli
       Ollama (Local)         vLLM (Production)
 ```
 
-## 🎯 Learning Objectives
-
-- Learn Spring AI
-- Understand how LLM Agents work
-- Build production-ready AI integrations
-- Keep the inference layer replaceable
-- Explore the complete AI application lifecycle, from local development to Kubernetes deployment
-
 ## Docs
 
+- Architecture design: `docs/architecture.md`
 - Memory design: `docs/memory.md`
 - RAG ingestion flow: `docs/RAG.md`
+- Prompts flow: `docs/prompts.md`
+- Caching design: `docs/caching.md`
+- Roadmap (current state + remaining work): `docs/roadmap.md`
+- Local setup and run guide: `docs/local-run.md`
 
-## BUILD + RUN
+## Quick Start
 
-### Prerequisites
-
-The app requires **PostgreSQL with pgvector** and **Redis Stack** running before it starts.
-
-Flyway migrations run automatically on startup against the configured datasource
-(`spring.datasource.*`), including the `user_memory` table migration.
-
-Start dependencies with:
+See full local instructions in `docs/local-run.md`.
 
 ```shell
-# Linux/Windows
 docker compose up postgres redis -d
-
-# Mac
-docker compose -f docker-compose.yml -f docker-compose.mac.yml up postgres redis -d
-```
-
-The container uses `restart: unless-stopped` — you only need to do this once per machine.
-
-### Linux / Windows (Ollama runs in Docker)
-
-```shell
 docker compose up --build
 ```
 
-Ollama and the `qwen3:8b` model are managed entirely in Docker. The model is stored in a
-named volume so it is only downloaded once.
-
-### Mac — Apple Silicon (native Ollama)
-
-Running Ollama inside Docker on macOS means CPU-only inference — no Metal/GPU access.
-For full M-series performance, run Ollama natively and use the Mac override to skip the
-Ollama containers:
-
-```shell
-# 1. Install Ollama natively (once)
-#    Match the version in OLLAMA_VERSION in .env
-#    Releases: https://github.com/ollama/ollama/releases
-brew install ollama
-brew services stop ollama    # stop and disable auto-start on login
-
-# 2. Pull the model (once)
-ollama serve &
-ollama pull qwen3:8b
-pkill ollama
-
-# 3. Before running the app, start Ollama manually
-ollama serve &
-
-# 4. Start the app services
-docker compose -f docker-compose.yml -f docker-compose.mac.yml up --build
-```
-
-App services connect to Ollama via the OpenAI-compatible API (`/v1`):
-
-| Platform | `OLLAMA_BASE_URL` |
-|---|---|
-| Mac (native) | `http://localhost:11434/v1` (default) |
-| Linux/Windows (Docker) | `http://ollama:11434/v1` |
-| Mac (Docker app → host Ollama) | `http://host.docker.internal:11434/v1` |
+Postman collection: `postman/Shopping-Assistant.postman_collection.json`

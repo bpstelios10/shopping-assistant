@@ -104,14 +104,18 @@ Shared by all agents:
 
 ## Routing
 
-Current: `RouterAgent` (LLM classifier) returns a `RoutingDecision {agent, confidence}`.
-`AgentOrchestrator` dispatches to the chosen agent; below a confidence threshold it falls
-back to the shopping agent. The router uses its own memory-free `ChatClient`.
+Current: `RouterAgent` (LLM classifier/planner) returns a `RoutingPlan` with ordered
+`RoutingStep {agent, task, confidence}` entries.
 
-## Future Evolution
+`AgentOrchestrator` currently executes the **first** step only; below a confidence
+threshold it falls back to the shopping agent. The router uses its own memory-free
+`ChatClient`.
 
-Evolve single-agent routing into a multi-agent **planner** that can pick (or combine)
-several agents per request.
+## Planner Evolution
+
+Multi-step planning is already present at the router output level (multiple decisions).
+Execution is still single-step in the orchestrator and will evolve to run full multi-step
+plans.
 
 ```text
 User
@@ -133,3 +137,4 @@ Router Agent
 ```
 
 The planner uses the Router to decide which agent (or agents) should execute the user's request.
+Current limitation: only the first planned decision is executed.
