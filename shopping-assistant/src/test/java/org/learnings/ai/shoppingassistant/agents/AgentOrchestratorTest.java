@@ -73,6 +73,19 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void chat_whenNoDecision_defaultsToShoppingAgent() {
+        ChatResponse expected = response("hi");
+        RouterAgent.RoutingPlan emptyPlan = new RouterAgent.RoutingPlan(List.of());
+        when(routerAgent.route("hi")).thenReturn(emptyPlan);
+        when(firstAgent.chat(eq("hi"), eq(USER_ID + ":conv-1"))).thenReturn(expected);
+
+        ChatResponse actual = orchestrator.chat("hi", "conv-1");
+
+        assertThat(actual).isSameAs(expected);
+        verifyNoMoreInteractions(firstAgent, secondAgent, routerAgent);
+    }
+
+    @Test
     void chat_whenNotSure_defaultsToShoppingAgent() {
         ChatResponse expected = response("hello");
         RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(

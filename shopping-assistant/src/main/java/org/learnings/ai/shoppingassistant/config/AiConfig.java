@@ -74,7 +74,7 @@ public class AiConfig {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
 //                .model("qwen2.5:3b-instruct")
                 .temperature(0.0)
-                .maxTokens(600)
+                .maxTokens(1000)
                 .combineWith(
                         OpenAiChatOptions.builder().extraBody(Map.of("think", false))
                 );

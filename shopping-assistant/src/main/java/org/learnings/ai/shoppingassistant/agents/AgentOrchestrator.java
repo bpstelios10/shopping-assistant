@@ -38,7 +38,11 @@ public class AgentOrchestrator {
             log.debug("route plan: [{}]", plan);
 
             // task: handle the multiple decisions
-            RouterAgent.RoutingStep decision = plan.decisions().getFirst();
+            List<RouterAgent.RoutingStep> decisions = plan.decisions();
+            // if null decision -> fallback to default-fallback agent (0 confidence) with the whole user message as task
+            RouterAgent.RoutingStep decision = decisions.isEmpty() ?
+                    new RouterAgent.RoutingStep(null, message, 0d) :
+                    decisions.getFirst();
 
             return getAgent(decision.agent(), decision.confidence())
                     .chat(decision.task(), convId);
