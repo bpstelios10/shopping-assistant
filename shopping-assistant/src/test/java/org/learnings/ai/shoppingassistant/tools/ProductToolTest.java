@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +36,7 @@ class ProductToolTest {
         List<Product> result = productTool.listAllProducts();
 
         assertThat(result).isEqualTo(PRODUCTS);
+        verifyNoMoreInteractions(productService);
     }
 
     @Test
@@ -47,6 +49,7 @@ class ProductToolTest {
         assertThat(result)
                 .isNotEmpty()
                 .hasValue(existingProduct);
+        verifyNoMoreInteractions(productService);
     }
 
     @Test
@@ -57,6 +60,7 @@ class ProductToolTest {
         Optional<Product> result = productTool.getProductById(nonExistingProductId);
 
         assertThat(result).isEmpty();
+        verifyNoMoreInteractions(productService);
     }
 
     @Test
@@ -69,6 +73,7 @@ class ProductToolTest {
         assertThat(result).isEqualTo(PRODUCTS);
         assertThat(captor.getValue())
                 .isEqualTo(new ProductSearchCriteria("espresso maker", 50.0, "kitchen"));
+        verifyNoMoreInteractions(productService);
     }
 
     @Test
@@ -80,5 +85,36 @@ class ProductToolTest {
 
         assertThat(captor.getValue())
                 .isEqualTo(new ProductSearchCriteria("widget", null, null));
+        verifyNoMoreInteractions(productService);
+    }
+
+    @Test
+    void searchProducts_whenQueryAndBlankCategoryAndNonExistingProduct_returnsEmptyList() {
+        ArgumentCaptor<ProductSearchCriteria> captor = ArgumentCaptor.forClass(ProductSearchCriteria.class);
+        when(productService.search(captor.capture())).thenReturn(List.of());
+
+        productTool.searchProducts("widget", null, "");
+
+        assertThat(captor.getValue())
+                .isEqualTo(new ProductSearchCriteria("widget", null, ""));
+        verifyNoMoreInteractions(productService);
+    }
+
+    @Test
+    void searchProducts_whenQueryAndCategoryAndNonExistingProduct_returnsSimilarCategoryProducts() {
+        ArgumentCaptor<ProductSearchCriteria> captor = ArgumentCaptor.forClass(ProductSearchCriteria.class);
+        when(productService.search(captor.capture()))
+                .thenReturn(List.of())
+                .thenReturn(PRODUCTS);
+
+        List<Product> result = productTool.searchProducts("widget", null, "something");
+
+        assertThat(result).isEqualTo(PRODUCTS);
+        assertThat(captor.getAllValues())
+                .containsExactly(
+                        new ProductSearchCriteria("widget", null, "something"),
+                        new ProductSearchCriteria(null, null, "something")
+                );
+        verifyNoMoreInteractions(productService);
     }
 }

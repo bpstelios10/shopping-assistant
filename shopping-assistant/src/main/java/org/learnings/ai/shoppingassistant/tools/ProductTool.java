@@ -35,7 +35,7 @@ public class ProductTool implements ShoppingAgentTool {
 
     @Tool(description = "Search the store's catalog for products matching the shopper's request. "
             + "Extract any price limit or category the shopper mentions and pass them as filters. "
-            + "When nothing matches, maybe bring back some products of the relevant category. "
+            + "When nothing matches, bring back some products of the same category. "
             + "Or else return empty list and ask for more info.")
     public List<Product> searchProducts(
             @ToolParam(description = "Free-text keywords describing the product the shopper wants, "
@@ -47,6 +47,10 @@ public class ProductTool implements ShoppingAgentTool {
                     + "Must be one of the values returned by the listCategories tool — call listCategories "
                     + "first to get the valid categories, and only pass a value from that list.")
             String category) {
-        return productService.search(new ProductSearchCriteria(query, maxPrice, category));
+        List<Product> results = productService.search(new ProductSearchCriteria(query, maxPrice, category));
+        if (results.isEmpty() && category != null && !category.isBlank()) {
+            results = productService.search(new ProductSearchCriteria(null, maxPrice, category));
+        }
+        return results;
     }
 }
