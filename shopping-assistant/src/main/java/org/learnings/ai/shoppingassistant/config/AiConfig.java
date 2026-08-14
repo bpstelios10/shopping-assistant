@@ -4,12 +4,14 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.learnings.ai.shoppingassistant.infrastructure.repositories.ObservationChatMemoryRepository;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.client.observation.ChatClientObservationContext;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -42,14 +44,17 @@ public class AiConfig {
     }
 
     @Bean
-        // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
-    RedisChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient, RedisChatMemoryProperties properties,
-                                                        RedisChatMemoryAutoConfiguration redisAutoConfig) {
-        return redisAutoConfig.redisChatMemory(jedisClient, properties);
+    ChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient,
+                                                   RedisChatMemoryProperties properties,
+                                                   RedisChatMemoryAutoConfiguration redisAutoConfig,
+                                                   ObservationRegistry observationRegistry) {
+        RedisChatMemoryRepository delegate = redisAutoConfig.redisChatMemory(jedisClient, properties);
+
+        return new ObservationChatMemoryRepository(delegate, observationRegistry);
     }
 
     @Bean
-    ChatMemory chatMemory(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
+    ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
         return new SummaryBufferChatMemory(chatMemoryRepository, chatModel, 10, 20);
     }
 
