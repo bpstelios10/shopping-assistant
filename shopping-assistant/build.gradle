@@ -52,6 +52,8 @@ dependencies {
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.4'
 
     implementation "io.micrometer:micrometer-registry-prometheus:${versions.micrometerPrometheus}"
+    // this adds for datasource the metrics: jdbc.connection and jdbc.query
+    implementation "net.ttddyy.observation:datasource-micrometer-spring-boot:2.2.1"
 
     compileOnly "org.projectlombok:lombok:${versions.lombok}"
     annotationProcessor "org.projectlombok:lombok:${versions.lombok}"

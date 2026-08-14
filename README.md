@@ -52,6 +52,7 @@ Implementation details and remaining work are tracked in the roadmap: `docs/road
 - Memory design: `docs/memory.md`
 - RAG ingestion flow: `docs/RAG.md`
 - Prompts flow: `docs/prompts.md`
+- Metrics: `docs/metrics.md`
 - Caching design: `docs/caching.md`
 - Roadmap (current state + remaining work): `docs/roadmap.md`
 - Local setup and run guide: `docs/local-run.md`
