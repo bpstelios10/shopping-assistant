@@ -29,7 +29,9 @@ public class OrderAgent implements Agent {
     public ChatResponse chat(String message, String conversationId) {
         ChatResponse chatResponse = chatClient
                 .prompt(orderPromptProvider.buildPrompt(message))
-                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .advisors(advisor -> advisor
+                        .param(ChatMemory.CONVERSATION_ID, conversationId)
+                        .param("agent", name()))
                 .tools(tools.toArray())
                 .call()
                 .chatResponse();

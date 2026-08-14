@@ -1,11 +1,14 @@
 package org.learnings.ai.shoppingassistant.config;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.observation.ChatClientObservationContext;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
@@ -87,7 +90,6 @@ public class AiConfig {
     @Bean
     ChatClient routerChatClient(ChatModel chatModel, ObservationRegistry observationRegistry) {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
-//                .model("qwen2.5:3b-instruct")
                 .temperature(0.0)
                 .maxTokens(1000)
                 .combineWith(
@@ -127,5 +129,19 @@ public class AiConfig {
                         .similarityThreshold(0.5)
                         .build())
                 .build();
+    }
+
+    @Bean
+    ObservationFilter agentTagFromChatClientContext() {
+        return context -> {
+            if (context instanceof ChatClientObservationContext c) {
+                String agent = (String) c.getRequest().context().get("agent");
+
+                context.addLowCardinalityKeyValue(KeyValue.of(
+                        "agent", (agent == null || agent.isBlank()) ? "unknown" : agent));
+            }
+
+            return context;
+        };
     }
 }

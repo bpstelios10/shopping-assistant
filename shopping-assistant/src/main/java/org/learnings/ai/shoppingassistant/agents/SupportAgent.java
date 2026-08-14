@@ -25,7 +25,9 @@ public class SupportAgent implements Agent {
     public ChatResponse chat(String message, String conversationId) {
         ChatResponse chatResponse = chatClient
                 .prompt(supportPromptProvider.buildPrompt(message))
-                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .advisors(advisor -> advisor
+                        .param(ChatMemory.CONVERSATION_ID, conversationId)
+                        .param("agent", name()))
                 .call()
                 .chatResponse();
 

@@ -16,7 +16,9 @@ public class RouterAgent {
 
     public RoutingPlan route(String message) {
         // task: later add some Cheap pre-filters, like hello messages, very obvious ones, block abuse, etc
-        return chatClient.prompt()
+        return chatClient
+                .prompt()
+                .advisors(advisor -> advisor.param("agent", "router"))
                 .system("""
                         You are a routing planner for an online store.
                         
