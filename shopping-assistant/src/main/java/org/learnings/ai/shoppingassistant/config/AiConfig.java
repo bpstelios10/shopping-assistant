@@ -1,5 +1,6 @@
 package org.learnings.ai.shoppingassistant.config;
 
+import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,6 +13,8 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryAutoConfiguration;
 import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
+import org.springframework.ai.model.tool.DefaultToolCallingManager;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.execution.ToolExecutionException;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
@@ -28,7 +31,15 @@ import java.util.Map;
 @Configuration
 public class AiConfig {
 
-    @Bean // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
+    @Bean
+    ToolCallingManager toolCallingManager(ObservationRegistry observationRegistry) {
+        return DefaultToolCallingManager.builder()
+                .observationRegistry(observationRegistry)
+                .build();
+    }
+
+    @Bean
+        // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
     RedisChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient, RedisChatMemoryProperties properties,
                                                         RedisChatMemoryAutoConfiguration redisAutoConfig) {
         return redisAutoConfig.redisChatMemory(jedisClient, properties);
@@ -48,9 +59,13 @@ public class AiConfig {
     }
 
     @Bean
-    @Scope("prototype") // builder beans are singletons. make it prototype to avoid leaks
-    ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel, MessageChatMemoryAdvisor memoryAdvisor) {
-        return ChatClient.builder(chatModel)
+    @Scope("prototype")
+        // builder beans are singletons. make it prototype to avoid leaks
+    ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel,
+                                                       MessageChatMemoryAdvisor memoryAdvisor,
+                                                       ObservationRegistry observationRegistry) {
+        return ChatClient
+                .builder(chatModel, observationRegistry, null, null)
                 .defaultAdvisors(memoryAdvisor);
     }
 
@@ -70,7 +85,7 @@ public class AiConfig {
     }
 
     @Bean
-    ChatClient routerChatClient(ChatModel chatModel) {
+    ChatClient routerChatClient(ChatModel chatModel, ObservationRegistry observationRegistry) {
         ChatOptions.Builder<?> routerChatOptionsBuilder = ChatOptions.builder()
 //                .model("qwen2.5:3b-instruct")
                 .temperature(0.0)
@@ -80,7 +95,7 @@ public class AiConfig {
                 );
 
         return ChatClient
-                .builder(chatModel)
+                .builder(chatModel, observationRegistry, null, null)
                 .defaultOptions(routerChatOptionsBuilder)
                 .build();
     }
