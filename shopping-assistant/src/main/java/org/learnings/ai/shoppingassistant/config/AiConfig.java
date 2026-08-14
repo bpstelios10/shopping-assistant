@@ -4,7 +4,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.learnings.ai.shoppingassistant.infrastructure.repositories.ObservationChatMemoryRepository;
+import org.learnings.ai.shoppingassistant.infrastructure.repositories.RedisChatMemoryRepositoryObservationDecorator;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -44,13 +44,14 @@ public class AiConfig {
     }
 
     @Bean
+    // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
     ChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient,
                                                    RedisChatMemoryProperties properties,
                                                    RedisChatMemoryAutoConfiguration redisAutoConfig,
                                                    ObservationRegistry observationRegistry) {
         RedisChatMemoryRepository delegate = redisAutoConfig.redisChatMemory(jedisClient, properties);
 
-        return new ObservationChatMemoryRepository(delegate, observationRegistry);
+        return new RedisChatMemoryRepositoryObservationDecorator(delegate, observationRegistry);
     }
 
     @Bean
@@ -68,7 +69,7 @@ public class AiConfig {
 
     @Bean
     @Scope("prototype")
-        // builder beans are singletons. make it prototype to avoid leaks
+    // builder beans are singletons. make it prototype to avoid leaks
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel,
                                                        MessageChatMemoryAdvisor memoryAdvisor,
                                                        ObservationRegistry observationRegistry) {

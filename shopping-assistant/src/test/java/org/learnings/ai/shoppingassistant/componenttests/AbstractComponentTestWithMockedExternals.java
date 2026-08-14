@@ -2,7 +2,7 @@ package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +26,7 @@ public abstract class AbstractComponentTestWithMockedExternals {
     @MockitoBean
     DataSource dataSource;
     @MockitoBean
-    RedisChatMemoryRepository redisChatMemoryRepository;
+    ChatMemoryRepository redisChatMemoryRepository;
     @MockitoBean
     UserMemoryRepository userMemoryRepository;
 

@@ -12,6 +12,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.DefaultChatClient;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,10 +64,12 @@ class RouterAgentTest {
         verifyNoMoreInteractions(chatClient);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void route_whenClientThrows_propagatesException() {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.call()).thenThrow(new RuntimeException("connection failed"));
@@ -88,9 +91,17 @@ class RouterAgentTest {
         );
     }
 
+    @SuppressWarnings("unchecked")
     private RouterAgent.RoutingPlan getRoutingDecision(String text, List<RouterAgent.RoutingStep> decisions) {
         ChatClient.ChatClientRequestSpec requestSpec = mock(DefaultChatClient.DefaultChatClientRequestSpec.class);
         when(chatClient.prompt()).thenReturn(requestSpec);
+        ChatClient.AdvisorSpec advisorSpec = mock(ChatClient.AdvisorSpec.class);
+        when(advisorSpec.param("agent", "router")).thenReturn(advisorSpec);
+        when(requestSpec.advisors(any(Consumer.class))).thenAnswer(inv -> {
+            Consumer<ChatClient.AdvisorSpec> c = inv.getArgument(0);
+            c.accept(advisorSpec);
+            return requestSpec;
+        });
         when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.user(text)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec mockResponse = mock(ChatClient.CallResponseSpec.class);

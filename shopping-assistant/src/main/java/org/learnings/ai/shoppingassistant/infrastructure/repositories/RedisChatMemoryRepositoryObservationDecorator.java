@@ -8,41 +8,44 @@ import org.springframework.ai.chat.messages.Message;
 
 import java.util.List;
 
-public class ObservationChatMemoryRepository implements ChatMemoryRepository {
+public class RedisChatMemoryRepositoryObservationDecorator implements ChatMemoryRepository {
+
+    private static final String OBSERVATION_NAME = "chat_memory";
 
     private final ChatMemoryRepository delegate;
     private final ObservationRegistry registry;
 
-    public ObservationChatMemoryRepository(ChatMemoryRepository delegate, ObservationRegistry registry) {
+    public RedisChatMemoryRepositoryObservationDecorator(ChatMemoryRepository delegate, ObservationRegistry registry) {
         this.delegate = delegate;
         this.registry = registry;
     }
 
     @Override
     public @NonNull List<Message> findByConversationId(@NonNull String id) {
-        return Observation.createNotStarted("chat_memory", registry)
-                .lowCardinalityKeyValue("operation", "read")
+        return observation("read")
                 .observe(() -> delegate.findByConversationId(id));
     }
 
     @Override
     public void saveAll(@NonNull String id, @NonNull List<Message> messages) {
-        Observation.createNotStarted("chat_memory", registry)
-                .lowCardinalityKeyValue("operation", "write")
+        observation("write")
                 .observe(() -> delegate.saveAll(id, messages));
     }
 
     @Override
     public void deleteByConversationId(@NonNull String id) {
-        Observation.createNotStarted("chat_memory", registry)
-                .lowCardinalityKeyValue("operation", "delete")
+        observation("delete")
                 .observe(() -> delegate.deleteByConversationId(id));
     }
 
     @Override
     public @NonNull List<String> findConversationIds() {
-        return Observation.createNotStarted("chat_memory", registry)
-                .lowCardinalityKeyValue("operation", "list")
+        return observation("list")
                 .observe(delegate::findConversationIds);
+    }
+
+    private Observation observation(String operation) {
+        return Observation.createNotStarted(OBSERVATION_NAME, registry)
+                .lowCardinalityKeyValue("operation", operation);
     }
 }

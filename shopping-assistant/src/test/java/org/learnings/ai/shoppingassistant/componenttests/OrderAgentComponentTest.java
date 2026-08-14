@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.ORDERS;
@@ -316,11 +317,13 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
         verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
+    @SuppressWarnings("unchecked")
     private void mockModel(String message) {
         var reqSpec = mock(ChatClient.ChatClientRequestSpec.class);
         var callSpec = mock(ChatClient.CallResponseSpec.class);
 
         when(routerChatClient.prompt()).thenReturn(reqSpec);
+        when(reqSpec.advisors(any(Consumer.class))).thenReturn(reqSpec);
         when(reqSpec.system(anyString())).thenReturn(reqSpec);
         when(reqSpec.user(message)).thenReturn(reqSpec);
         when(reqSpec.call()).thenReturn(callSpec);
