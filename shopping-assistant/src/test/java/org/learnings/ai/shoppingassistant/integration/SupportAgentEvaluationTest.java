@@ -1,15 +1,18 @@
 package org.learnings.ai.shoppingassistant.integration;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.learnings.ai.shoppingassistant.agents.SupportAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.learnings.ai.shoppingassistant.agents.SupportAgent;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.evaluation.FactCheckingEvaluator;
 import org.springframework.ai.chat.evaluation.RelevancyEvaluator;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.evaluation.EvaluationRequest;
@@ -18,15 +21,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Named.named;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Tag("integration")
 @SpringBootTest
 @Import({EvaluationConfig.class})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SupportAgentEvaluationTest {
 
     private static final Logger log = LoggerFactory.getLogger(SupportAgentEvaluationTest.class);
@@ -39,12 +48,20 @@ class SupportAgentEvaluationTest {
     private FactCheckingEvaluator factCheckingEvaluator;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private ChatMemory chatMemory;
+    private String conversationId;
 
-    @Test
-    void refundPolicy() throws Exception {
-        EvaluationCase testCase = loadCases().getFirst();
+    @AfterEach
+    void tearDown() {
+        chatMemory.clear(conversationId);
+    }
 
-        ChatResponse chatResponse = supportAgent.chat(testCase.question(), "random-conv-id");
+    @ParameterizedTest
+    @MethodSource("loadCases")
+    void supportAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(EvaluationCase testCase) {
+        conversationId = "evaluation-" + testCase.id();
+        ChatResponse chatResponse = supportAgent.chat(testCase.question(), conversationId);
 
         assertThat(chatResponse.getResult()).isNotNull();
         String answer = chatResponse.getResult().getOutput().getText();
@@ -76,10 +93,12 @@ class SupportAgentEvaluationTest {
         assertThat(groundedness.getScore()).isLessThan(0.1f);
     }
 
-    public List<EvaluationCase> loadCases() throws IOException {
+    private Stream<Arguments> loadCases() throws IOException {
         var resource = new ClassPathResource("evaluation/rag/rag-cases.json");
 
-        return objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
+        List<EvaluationCase> cases = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
         });
+
+        return cases.stream().map(c -> arguments(named(c.id(), c)));
     }
 }

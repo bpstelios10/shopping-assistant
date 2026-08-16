@@ -6,5 +6,12 @@
       "refund-policy.pdf",
       "returns.md"
     ]
+  },
+  {
+    "id": "shipping-policy",
+    "question": "What is your shipping policy?",
+    "expectedDocuments": [
+      "shipping-policy.pdf", "faq.md", "refund-policy.pdf", "returns.md"
+    ]
   }
 ]
