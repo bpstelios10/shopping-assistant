@@ -61,9 +61,34 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
 }
 
-tasks.withType(Test).configureEach {
+test {
     useJUnitPlatform()
     maxHeapSize = "2G"
+}
+
+// exclude integration tests from clean build
+gradle.taskGraph.whenReady { graph ->
+    def runningBuild = graph.hasTask(':build') || graph.hasTask(':check')
+
+    if (runningBuild) {
+        tasks.named('test', Test) {
+            useJUnitPlatform {
+                excludeTags 'integration'
+            }
+        }
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
 }
 
 jar.enabled=false

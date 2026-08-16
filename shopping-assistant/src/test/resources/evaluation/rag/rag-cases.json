@@ -1,0 +1,10 @@
+[
+  {
+    "id": "refund-policy",
+    "question": "What is your refund policy?",
+    "expectedDocuments": [
+      "refund-policy.pdf",
+      "returns.md"
+    ]
+  }
+]
