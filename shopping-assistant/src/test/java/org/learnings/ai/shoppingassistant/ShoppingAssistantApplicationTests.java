@@ -20,6 +20,5 @@ class ShoppingAssistantApplicationTests {
     private UserMemoryRepository userMemoryRepository;
 
     @Test
-    void contextLoads() {
-    }
+    void contextLoads() { }
 }

@@ -57,8 +57,5 @@ class ControllerExceptionHandlerTest {
         assertThat(body.errorMessage()).isEqualTo("message: must not be blank, message2: must not be blank");
     }
 
-    record DummyObject(String message, String message2) {
-    }
-
-    ;
+    record DummyObject(String message, String message2) { }
 }

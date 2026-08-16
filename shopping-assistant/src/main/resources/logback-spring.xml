@@ -8,18 +8,18 @@
     </appender>
 
     <springProfile name="default">
-        <logger name="org.learnings" additivity="false" level="DEBUG" >
+        <logger name="org.learnings" additivity="false" level="DEBUG">
             <appender-ref ref="STDOUT"/>
         </logger>
     </springProfile>
 
     <springProfile name="local | docker-compose">
-        <logger name="org.learnings" additivity="false" level="DEBUG" >
+        <logger name="org.learnings" additivity="false" level="DEBUG">
             <appender-ref ref="STDOUT"/>
         </logger>
     </springProfile>
 
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

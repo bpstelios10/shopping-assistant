@@ -134,7 +134,7 @@ class AgentOrchestratorTest {
     void chat_setsCurrentUserDuringAgentCallAndClearsAfter() {
         AtomicReference<String> userDuringCall = new AtomicReference<>();
         RouterAgent.RoutingPlan plan = new RouterAgent.RoutingPlan(
-                List.of(new RouterAgent.RoutingStep(SHOPPING, "hi",0.9)));
+                List.of(new RouterAgent.RoutingStep(SHOPPING, "hi", 0.9)));
         when(routerAgent.route("hi")).thenReturn(plan);
         when(firstAgent.chat(any(), any())).thenAnswer(_ -> {
             userDuringCall.set(CurrentUser.get());

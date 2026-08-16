@@ -73,7 +73,7 @@ bootJar {
 }
 
 wrapper {
-    gradleVersion = "9.6.0"
+    gradleVersion = "9.7.0"
 }
 
 apply from: 'gradle/jacoco.gradle'

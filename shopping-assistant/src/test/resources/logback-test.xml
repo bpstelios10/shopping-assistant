@@ -7,7 +7,7 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
 
     <!-- profiles only get activated in component tests. or else value is null and root is applied -->
@@ -15,12 +15,12 @@
          so that it overrides the previous assignment -->
     <springProfile name="component-test | component-test-actuator">
         <root level="INFO">
-            <appender-ref ref="STDOUT" />
+            <appender-ref ref="STDOUT"/>
         </root>
     </springProfile>
 
-    <logger name="org.learnings" level="DEBUG" />
-    <logger name="org.apache.kafka" level="WARN" />
-    <logger name="kafka" level="WARN" />
-    <logger name="org.apache.zookeeper" level="WARN" />
+    <logger name="org.learnings" level="DEBUG"/>
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="kafka" level="WARN"/>
+    <logger name="org.apache.zookeeper" level="WARN"/>
 </configuration>

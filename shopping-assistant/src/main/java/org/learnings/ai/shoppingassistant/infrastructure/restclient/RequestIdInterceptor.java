@@ -6,6 +6,7 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+
 import java.io.IOException;
 
 import static org.learnings.ai.shoppingassistant.web.filters.RequestIdFilter.MDC_KEY;
