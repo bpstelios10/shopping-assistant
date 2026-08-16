@@ -3,7 +3,7 @@ package org.learnings.ai.shoppingassistant.componenttests;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.learnings.ai.shoppingassistant.agents.RouterAgent;
-import org.learnings.ai.shoppingassistant.controllers.ChatController;
+import org.learnings.ai.shoppingassistant.web.controllers.ChatController;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;

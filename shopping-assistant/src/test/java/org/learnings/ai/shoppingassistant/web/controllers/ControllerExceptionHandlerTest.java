@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.controllers;
+package org.learnings.ai.shoppingassistant.web.controllers;
 
 
 import org.junit.jupiter.api.Test;

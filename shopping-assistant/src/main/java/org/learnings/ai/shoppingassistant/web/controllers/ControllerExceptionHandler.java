@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.controllers;
+package org.learnings.ai.shoppingassistant.web.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
