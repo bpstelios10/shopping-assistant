@@ -17,8 +17,8 @@ import java.util.UUID;
 @Component
 public class RequestIdFilter extends OncePerRequestFilter {
 
-    private static final String REQUEST_ID_HEADER = "X-Request-ID";
-    private static final String MDC_KEY = "requestId";
+    public static final String REQUEST_ID_HEADER = "X-Request-ID";
+    public static final String MDC_KEY = "requestId";
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, HttpServletResponse response,

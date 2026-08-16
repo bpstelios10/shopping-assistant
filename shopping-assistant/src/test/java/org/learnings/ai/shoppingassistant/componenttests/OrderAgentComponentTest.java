@@ -31,8 +31,10 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.ORDERS;
+import static org.learnings.ai.shoppingassistant.web.filters.RequestIdFilter.REQUEST_ID_HEADER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -268,12 +270,14 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
     }
 
     @Test
-    void chat_whenModelRequestsGetOrderById_executesOrderTool() throws Exception {
+    void chat_whenModelRequestsGetOrderById_executesOrderToolAndPropagatesMdc() throws Exception {
         UUID orderId = UUID.randomUUID();
         String chatMessage = "what is the status of order " + orderId + "?";
         mockModel(chatMessage);
+        UUID requestId = UUID.randomUUID();
         server.expect(requestTo("http://shopping-assistant/orders/" + orderId))
                 .andExpect(method(HttpMethod.GET))
+                .andExpect(header(REQUEST_ID_HEADER, requestId.toString()))
                 .andRespond(withSuccess("""
                         {
                           "id":"%s",
@@ -298,7 +302,8 @@ public class OrderAgentComponentTest extends AbstractComponentTestWithMockedExte
 
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(request)))
+                        .content(mapper.writeValueAsString(request))
+                        .header(REQUEST_ID_HEADER, requestId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.generations[0].text").value("your order is paid"));
 

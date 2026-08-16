@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
@@ -20,21 +21,21 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.learnings.ai.shoppingassistant.web.filters.RequestIdFilter.MDC_KEY;
+import static org.learnings.ai.shoppingassistant.web.filters.RequestIdFilter.REQUEST_ID_HEADER;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RequestIdFilterTest {
 
-    private final RequestIdFilter filter = new RequestIdFilter();
     @Mock
     private HttpServletRequest request;
     @Mock
     private HttpServletResponse response;
     @Mock
     private FilterChain filterChain;
+    private final RequestIdFilter filter = new RequestIdFilter();
 
-    private static final String HEADER_NAME = "X-Request-ID";
-    private static final String MDC_KEY = "requestId";
     private static final String VALID_UUID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String GENERATED_UUID = "999e9999-e99b-99d3-a999-999999999999";
 
@@ -50,20 +51,20 @@ class RequestIdFilterTest {
 
     @Test
     void doFilterInternal_whenHeaderIsValidUuid_usesClientProvidedUuid() throws ServletException, IOException {
-        when(request.getHeader(HEADER_NAME)).thenReturn(VALID_UUID);
+        when(request.getHeader(REQUEST_ID_HEADER)).thenReturn(VALID_UUID);
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(response).setHeader(HEADER_NAME, VALID_UUID);
+        verify(response).setHeader(REQUEST_ID_HEADER, VALID_UUID);
         verify(filterChain).doFilter(request, response);
         assertThat(MDC.get(MDC_KEY)).isNull();
     }
 
     @ParameterizedTest
-    @NullSource
-    @ValueSource(strings = {"", " ", "\n\r", "not-a-uuid", "123e4567-e89b-12d3-a456"})
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\n\r", "not-a-uuid", "123e4567-e89b-12d3-a456"})
     void doFilterInternal_whenHeaderIsMissingOrInvalid_generatesRandomUuid(String invalidHeaderValue) throws ServletException, IOException {
-        when(request.getHeader(HEADER_NAME)).thenReturn(invalidHeaderValue);
+        when(request.getHeader(REQUEST_ID_HEADER)).thenReturn(invalidHeaderValue);
         UUID mockedUuid = UUID.fromString(GENERATED_UUID);
 
         try (MockedStatic<UUID> mockedStaticUuid = mockStatic(UUID.class)) {
@@ -72,7 +73,7 @@ class RequestIdFilterTest {
             filter.doFilterInternal(request, response, filterChain);
 
             mockedStaticUuid.verify(UUID::randomUUID, times(1));
-            verify(response).setHeader(HEADER_NAME, GENERATED_UUID);
+            verify(response).setHeader(REQUEST_ID_HEADER, GENERATED_UUID);
         }
 
         verify(filterChain).doFilter(request, response);
@@ -81,7 +82,7 @@ class RequestIdFilterTest {
 
     @Test
     void doFilterInternal_setsMdc() throws ServletException, IOException {
-        when(request.getHeader(HEADER_NAME)).thenReturn(VALID_UUID);
+        when(request.getHeader(REQUEST_ID_HEADER)).thenReturn(VALID_UUID);
         doAnswer(_ -> {
             assertThat(MDC.get(MDC_KEY)).isEqualTo(VALID_UUID);
             return null;
