@@ -12,5 +12,33 @@
         }
       ]
     }
+  },
+  {
+    "id": "support agent for shopping inquires",
+    "question": "How much does the iPhone cost?",
+    "expectedPlan": {
+      "decisions": [
+        {
+          "agent": "SHOPPING",
+          "taskContains": [
+            "iPhone", "cost"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "support agent for orders inquiries",
+    "question": "What is the status of my order f47ac10b-58cc-4372-a567-0e02b2c3d011?",
+    "expectedPlan": {
+      "decisions": [
+        {
+          "agent": "ORDERS",
+          "taskContains": [
+            "order", "f47ac10b-58cc-4372-a567-0e02b2c3d011", "status"
+          ]
+        }
+      ]
+    }
   }
 ]
