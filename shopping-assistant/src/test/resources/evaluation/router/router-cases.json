@@ -1,0 +1,16 @@
+[
+  {
+    "id": "support agent for shipping inquiries",
+    "question": "What is your shipping policy?",
+    "expectedPlan": {
+      "decisions": [
+        {
+          "agent": "SUPPORT",
+          "taskContains": [
+            "shipping policy"
+          ]
+        }
+      ]
+    }
+  }
+]
