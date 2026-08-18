@@ -8,6 +8,7 @@ import org.learnings.ai.shoppingassistant.tools.OrderTool;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.DefaultChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -16,6 +17,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +67,8 @@ class OrderAgentTest {
             when(advisorSpec.param(any(), any())).thenReturn(advisorSpec);
             consumer.accept(advisorSpec);
             verify(advisorSpec).param(ChatMemory.CONVERSATION_ID, CONVERSATION_ID);
+            verify(advisorSpec).param("agent", "orders");
+            verify(advisorSpec).param(eq("toolCalls"), anyList());
 
             return requestSpec;
         }).when(requestSpec).advisors(any(Consumer.class));
@@ -72,7 +76,8 @@ class OrderAgentTest {
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
-        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
+        ChatClientResponse chatClientResponse = new ChatClientResponse(chatResponse, Map.of());
+        when(callResponseSpec.chatClientResponse()).thenReturn(chatClientResponse);
 
         ChatResponse response = orderAgent.chat(message, CONVERSATION_ID);
 
@@ -113,7 +118,8 @@ class OrderAgentTest {
         when(requestSpec.tools(orderTool)).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.chatResponse()).thenReturn(null);
+        ChatClientResponse chatClientResponse = new ChatClientResponse(null, Map.of());
+        when(callResponseSpec.chatClientResponse()).thenReturn(chatClientResponse);
 
         assertThatThrownBy(() -> orderAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)

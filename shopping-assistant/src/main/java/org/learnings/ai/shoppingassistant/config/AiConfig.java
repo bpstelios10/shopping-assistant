@@ -4,6 +4,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingAdvisor;
 import org.learnings.ai.shoppingassistant.infrastructure.repositories.RedisChatMemoryRepositoryObservationDecorator;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -72,10 +73,11 @@ public class AiConfig {
     // builder beans are singletons. make it prototype to avoid leaks
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel,
                                                        MessageChatMemoryAdvisor memoryAdvisor,
-                                                       ObservationRegistry observationRegistry) {
+                                                       ObservationRegistry observationRegistry,
+                                                       ToolCallAuditingAdvisor toolCallAuditingAdvisor) {
         return ChatClient
                 .builder(chatModel, observationRegistry, null, null)
-                .defaultAdvisors(memoryAdvisor);
+                .defaultAdvisors(memoryAdvisor, toolCallAuditingAdvisor);
     }
 
     /**

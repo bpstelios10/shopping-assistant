@@ -4,10 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.learnings.ai.shoppingassistant.tools.OrderAgentTool;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -27,14 +30,18 @@ public class OrderAgent implements Agent {
 
     @Override
     public ChatResponse chat(String message, String conversationId) {
-        ChatResponse chatResponse = chatClient
+        ChatClient.CallResponseSpec responseSpec = chatClient
                 .prompt(orderPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor
                         .param(ChatMemory.CONVERSATION_ID, conversationId)
-                        .param("agent", name()))
+                        .param("agent", name())
+                        .param("toolCalls", new ArrayList<AssistantMessage.ToolCall>()))
                 .tools(tools.toArray())
-                .call()
-                .chatResponse();
+                .call();
+
+        ChatClientResponse chatClientResponse = responseSpec.chatClientResponse();
+        // chatClientResponse.context().get("toolCalls");
+        ChatResponse chatResponse = chatClientResponse.chatResponse();
 
         if (chatResponse == null) {
             throw new RuntimeException("Agent didnt reply");
