@@ -209,4 +209,32 @@ class ToolCallAuditingAdvisorTest {
         assertThat(contextToolCalls).hasSize(1);
         verifyNoMoreInteractions(chain, response, generation, assistantMessage);
     }
+
+    @Test
+    void adviseCall_whenContextListIsImmutable_logsWarningAndDoesNotThrow() {
+        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
+
+        Generation generation = mock(Generation.class);
+        AssistantMessage assistantMessage = mock(AssistantMessage.class);
+        ChatResponse chatResponse = mock(ChatResponse.class);
+        when(chatResponse.getResult()).thenReturn(generation);
+        when(chatResponse.hasToolCalls()).thenReturn(true);
+
+        List<AssistantMessage.ToolCall> immutableList = List.of(mock(AssistantMessage.ToolCall.class));
+
+        Map<String, Object> context = new HashMap<>();
+        context.put("toolCalls", immutableList);
+
+        when(chain.nextCall(request)).thenReturn(response);
+        when(response.chatResponse()).thenReturn(chatResponse);
+        when(generation.getOutput()).thenReturn(assistantMessage);
+        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
+        when(response.context()).thenReturn(context);
+
+        ChatClientResponse result = advisor.adviseCall(request, chain);
+
+        assertThat(result).isSameAs(response);
+        assertThat(context.get("toolCalls")).isEqualTo(immutableList); // unchanged, no exception thrown
+        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
+    }
 }

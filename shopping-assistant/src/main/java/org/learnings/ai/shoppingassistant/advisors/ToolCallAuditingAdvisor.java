@@ -16,8 +16,14 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Post-tool-calling advisor that captures executed tool calls from the model response,
- * and appends them to the `toolCalls` list in the advisor context for downstream use.
+ * Post-tool-calling advisor that captures executed tool calls from the model response
+ * and appends them to the mutable {@code List<AssistantMessage.ToolCall>} stored under
+ * the {@code "toolCalls"} key in the advisor request context.
+ *
+ * <p>Callers must pre-populate the context with a mutable list (e.g. via
+ * {@code .param("toolCalls", new ArrayList<>())}) before invoking the chat client;
+ * if the key is missing, not a list, contains non-{@code ToolCall} elements, or is
+ * immutable, the update is skipped (and logged) without failing the call.
  */
 @Component
 public class ToolCallAuditingAdvisor implements CallAdvisor {
@@ -60,7 +66,11 @@ public class ToolCallAuditingAdvisor implements CallAdvisor {
             if (allToolCalls) {
                 @SuppressWarnings("unchecked")
                 List<AssistantMessage.ToolCall> contextToolCalls = (List<AssistantMessage.ToolCall>) rawList;
-                contextToolCalls.addAll(toolCalls);
+                try {
+                    contextToolCalls.addAll(toolCalls);
+                } catch (UnsupportedOperationException e) {
+                    log.warn("Skipping toolCalls context update: context list is immutable", e);
+                }
             } else {
                 log.warn("Skipping toolCalls context update: list contains non-ToolCall elements");
             }
