@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -68,7 +69,7 @@ class OrderAgentTest {
             consumer.accept(advisorSpec);
             verify(advisorSpec).param(ChatMemory.CONVERSATION_ID, CONVERSATION_ID);
             verify(advisorSpec).param("agent", "orders");
-            verify(advisorSpec).param(eq("toolCalls"), anyList());
+            verify(advisorSpec).param(eq(TOOL_CALLS_CONTEXT_KEY), anyList());
 
             return requestSpec;
         }).when(requestSpec).advisors(any(Consumer.class));
@@ -79,7 +80,8 @@ class OrderAgentTest {
         ChatClientResponse chatClientResponse = new ChatClientResponse(chatResponse, Map.of());
         when(callResponseSpec.chatClientResponse()).thenReturn(chatClientResponse);
 
-        ChatResponse response = orderAgent.chat(message, CONVERSATION_ID);
+        AgentChatResult result = orderAgent.chat(message, CONVERSATION_ID);
+        ChatResponse response = result.chatResponse();
 
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResults()).hasSize(1);

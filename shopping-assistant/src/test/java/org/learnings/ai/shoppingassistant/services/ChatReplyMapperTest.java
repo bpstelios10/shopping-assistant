@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.services;
 
 import org.junit.jupiter.api.Test;
+import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
@@ -23,16 +24,19 @@ class ChatReplyMapperTest {
         AssistantMessage output = AssistantMessage.builder()
                 .content("some response")
                 .properties(Map.of("reasoningContent", "thinking..."))
-                .toolCalls(List.of(toolCall))
                 .build();
-        ChatResponse response = new ChatResponse(
+        ChatResponse chatResponse = new ChatResponse(
                 List.of(new Generation(output)),
                 ChatResponseMetadata.builder()
                         .model("qwen3:8b")
                         .usage(new DefaultUsage(10, 20))
                         .build());
+        AgentChatResult result = AgentChatResult.builder()
+                .chatResponse(chatResponse)
+                .toolCalls(List.of(toolCall))
+                .build();
 
-        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response, "conv-id");
+        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(result, "conv-id");
 
         assertThat(dto.model()).isEqualTo("qwen3:8b");
         assertThat(dto.conversationId()).isEqualTo("conv-id");
@@ -44,7 +48,7 @@ class ChatReplyMapperTest {
         assertThat(generation.text()).isEqualTo("some response");
         assertThat(generation.messageType()).isEqualTo(MessageType.ASSISTANT.getValue());
         assertThat(generation.reasoningContent()).isEqualTo("thinking...");
-        assertThat(generation.toolCalls()).containsExactly(
+        assertThat(dto.toolsCalled()).containsExactly(
                 new ChatReplyDto.ToolCall("call-1", "function", "getProduct", "{\"id\":1}"));
     }
 
@@ -56,13 +60,16 @@ class ChatReplyMapperTest {
                         .model("qwen3:8b")
                         .usage(new DefaultUsage(1, 2))
                         .build());
+        AgentChatResult result = AgentChatResult.builder()
+                .chatResponse(response)
+                .build();
 
-        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(response, null);
+        ChatReplyDto dto = ChatReplyMapper.toChatReplyDto(result, null);
 
         assertThat(dto.conversationId()).isEqualTo(null);
         ChatReplyDto.GenerationDto generation = dto.generations().getFirst();
         assertThat(generation.text()).isEqualTo("plain answer");
-        assertThat(generation.toolCalls()).isEmpty();
+        assertThat(dto.toolsCalled()).isEmpty();
         assertThat(generation.reasoningContent()).isNull();
     }
 }

@@ -7,6 +7,7 @@ import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.DefaultChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -16,6 +17,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,9 +75,11 @@ class SupportAgentTest {
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("some response"))));
-        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
+        ChatClientResponse chatClientResponse = new ChatClientResponse(chatResponse, Map.of());
+        when(callResponseSpec.chatClientResponse()).thenReturn(chatClientResponse);
 
-        ChatResponse response = supportAgent.chat(message, CONVERSATION_ID);
+        AgentChatResult result = supportAgent.chat(message, CONVERSATION_ID);
+        ChatResponse response = result.chatResponse();
 
         assertThat(response.getResult()).isNotNull();
         assertThat(response.getResults()).hasSize(1);
@@ -112,7 +116,8 @@ class SupportAgentTest {
         when(requestSpec.advisors(any(Consumer.class))).thenReturn(requestSpec);
         ChatClient.CallResponseSpec callResponseSpec = mock(DefaultChatClient.DefaultCallResponseSpec.class);
         when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.chatResponse()).thenReturn(null);
+        ChatClientResponse chatClientResponse = new ChatClientResponse(null, Map.of());
+        when(callResponseSpec.chatClientResponse()).thenReturn(chatClientResponse);
 
         assertThatThrownBy(() -> supportAgent.chat(message, CONVERSATION_ID))
                 .isInstanceOf(RuntimeException.class)

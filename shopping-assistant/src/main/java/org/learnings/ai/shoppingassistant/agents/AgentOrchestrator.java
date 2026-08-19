@@ -3,7 +3,6 @@ package org.learnings.ai.shoppingassistant.agents;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.learnings.ai.shoppingassistant.services.memory.CurrentUser;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class AgentOrchestrator {
         this.routerAgent = routerAgent;
     }
 
-    public ChatResponse chat(String message, String conversationId) {
+    public AgentChatResult chat(String message, String conversationId) {
         conversationId = Strings.isBlank(conversationId) ? UUID.randomUUID().toString() : conversationId;
         final String userId = resolveUserId();
         final String convId = userId + ":" + conversationId;

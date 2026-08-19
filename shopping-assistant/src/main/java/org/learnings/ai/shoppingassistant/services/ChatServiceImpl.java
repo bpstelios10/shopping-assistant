@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.agents.AgentOrchestrator;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -18,7 +19,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public ChatReplyDto chat(String message, String conversationId) {
-        ChatResponse chatResponse = agentOrchestrator.chat(message, conversationId);
+        AgentChatResult chatResponse = agentOrchestrator.chat(message, conversationId);
 
         return ChatReplyMapper.toChatReplyDto(chatResponse, conversationId);
     }

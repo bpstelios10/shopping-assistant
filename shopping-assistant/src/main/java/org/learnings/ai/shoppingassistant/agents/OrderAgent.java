@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
+
 @Slf4j
 @Component
 public class OrderAgent implements Agent {
@@ -29,25 +31,23 @@ public class OrderAgent implements Agent {
     }
 
     @Override
-    public ChatResponse chat(String message, String conversationId) {
+    public AgentChatResult chat(String message, String conversationId) {
         ChatClient.CallResponseSpec responseSpec = chatClient
                 .prompt(orderPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor
                         .param(ChatMemory.CONVERSATION_ID, conversationId)
                         .param("agent", name())
-                        .param("toolCalls", new ArrayList<AssistantMessage.ToolCall>()))
+                        .param(TOOL_CALLS_CONTEXT_KEY, new ArrayList<AssistantMessage.ToolCall>()))
                 .tools(tools.toArray())
                 .call();
 
         ChatClientResponse chatClientResponse = responseSpec.chatClientResponse();
-        // chatClientResponse.context().get("toolCalls");
-        ChatResponse chatResponse = chatClientResponse.chatResponse();
 
-        if (chatResponse == null) {
+        if (chatClientResponse.chatResponse() == null) {
             throw new RuntimeException("Agent didnt reply");
         }
 
-        return chatResponse;
+        return AgentChatResult.from(chatClientResponse);
     }
 
     @Override

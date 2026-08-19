@@ -28,7 +28,7 @@ class ChatControllerTest {
     void chat_whenCorrectInput_succeeds() {
         String message = "some message";
         String conversationId = "some-conversation-id";
-        ChatReplyDto reply = new ChatReplyDto("qwen3:8b", conversationId, 10, 20, List.of());
+        ChatReplyDto reply = new ChatReplyDto("qwen3:8b", conversationId, 10, 20, List.of(), List.of());
         when(chatService.chat(message, conversationId)).thenReturn(reply);
         ChatController.CreateChat request = new ChatController.CreateChat(message, conversationId);
 

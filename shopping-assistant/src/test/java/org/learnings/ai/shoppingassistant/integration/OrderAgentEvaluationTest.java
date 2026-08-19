@@ -29,9 +29,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @SpringBootTest
 @Import({EvaluationConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RouterAgentEvaluationTest {
+class OrderAgentEvaluationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(RouterAgentEvaluationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(OrderAgentEvaluationTest.class);
 
     @Autowired
     private RouterAgent routerAgent;

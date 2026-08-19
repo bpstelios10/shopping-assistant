@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.learnings.ai.shoppingassistant.tools.ShoppingAgentTool;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,21 +26,22 @@ public class ShoppingAgent implements Agent {
     }
 
     @Override
-    public ChatResponse chat(String message, String conversationId) {
-        ChatResponse chatResponse = chatClient
+    public AgentChatResult chat(String message, String conversationId) {
+        ChatClient.CallResponseSpec responseSpec = chatClient
                 .prompt(shoppingPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor
                         .param(ChatMemory.CONVERSATION_ID, conversationId)
                         .param("agent", name()))
                 .tools(tools.toArray())
-                .call()
-                .chatResponse();
+                .call();
 
-        if (chatResponse == null) {
+        ChatClientResponse chatClientResponse = responseSpec.chatClientResponse();
+
+        if (chatClientResponse.chatResponse() == null) {
             throw new RuntimeException("Agent didnt reply");
         }
 
-        return chatResponse;
+        return AgentChatResult.from(chatClientResponse);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.services;
 
 import org.junit.jupiter.api.Test;
+import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.agents.AgentOrchestrator;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -27,8 +28,9 @@ class ChatServiceImplTest {
                 .model("some-model")
                 .usage(new DefaultUsage(10, 20))
                 .build();
-        ChatResponse response = new ChatResponse(
+        ChatResponse chatResponse = new ChatResponse(
                 List.of(new Generation(new AssistantMessage("some response"))), metadata);
+        AgentChatResult response = AgentChatResult.builder().chatResponse(chatResponse).build();
         when(orchestrator.chat("hi", "conv-1")).thenReturn(response);
 
         ChatReplyDto dto = chatService.chat("hi", "conv-1");
