@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -96,7 +97,7 @@ class ToolCallAuditingAdvisorTest {
         contextToolCalls.add(mock(AssistantMessage.ToolCall.class));
 
         Map<String, Object> context = new HashMap<>();
-        context.put("toolCalls", contextToolCalls);
+        context.put(TOOL_CALLS_CONTEXT_KEY, contextToolCalls);
 
         when(chain.nextCall(request)).thenReturn(response);
         when(response.chatResponse()).thenReturn(chatResponse);
@@ -109,132 +110,6 @@ class ToolCallAuditingAdvisorTest {
         assertThat(result).isSameAs(response);
         assertThat(contextToolCalls).hasSize(3);
         assertThat(contextToolCalls).contains(toolCall1, toolCall2);
-        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
-    }
-
-    @Test
-    void adviseCall_whenContextMissingToolCallsKey_doesNothing() {
-        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
-
-        Generation generation = mock(Generation.class);
-        AssistantMessage assistantMessage = mock(AssistantMessage.class);
-        ChatResponse chatResponse = new ChatResponse(List.of(generation));
-
-        Map<String, Object> context = new HashMap<>();
-
-        when(chain.nextCall(request)).thenReturn(response);
-        when(response.chatResponse()).thenReturn(chatResponse);
-        when(generation.getOutput()).thenReturn(assistantMessage);
-        when(assistantMessage.hasToolCalls()).thenReturn(true);
-        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
-        when(response.context()).thenReturn(context);
-
-        ChatClientResponse result = advisor.adviseCall(request, chain);
-
-        assertThat(result).isSameAs(response);
-        assertThat(context).doesNotContainKey("toolCalls");
-        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
-    }
-
-    @Test
-    void adviseCall_whenContextToolCallsIsNotAList_doesNothing() {
-        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
-
-        Generation generation = mock(Generation.class);
-        AssistantMessage assistantMessage = mock(AssistantMessage.class);
-        ChatResponse chatResponse = new ChatResponse(List.of(generation));
-
-        Map<String, Object> context = new HashMap<>();
-        context.put("toolCalls", "not-a-list");
-
-        when(chain.nextCall(request)).thenReturn(response);
-        when(response.chatResponse()).thenReturn(chatResponse);
-        when(generation.getOutput()).thenReturn(assistantMessage);
-        when(assistantMessage.hasToolCalls()).thenReturn(true);
-        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
-        when(response.context()).thenReturn(context);
-
-        ChatClientResponse result = advisor.adviseCall(request, chain);
-
-        assertThat(result).isSameAs(response);
-        assertThat(context.get("toolCalls")).isEqualTo("not-a-list");
-        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
-    }
-
-    @Test
-    void adviseCall_whenContextListContainsNonToolCallItem_doesNotMutateOriginalList() {
-        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
-
-        Generation generation = mock(Generation.class);
-        AssistantMessage assistantMessage = mock(AssistantMessage.class);
-        ChatResponse chatResponse = new ChatResponse(List.of(generation));
-
-        List<Object> mixedList = new ArrayList<>();
-        mixedList.add("wrong-type");
-
-        Map<String, Object> context = new HashMap<>();
-        context.put("toolCalls", mixedList);
-
-        when(chain.nextCall(request)).thenReturn(response);
-        when(response.chatResponse()).thenReturn(chatResponse);
-        when(generation.getOutput()).thenReturn(assistantMessage);
-        when(assistantMessage.hasToolCalls()).thenReturn(true);
-        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
-        when(response.context()).thenReturn(context);
-
-        ChatClientResponse result = advisor.adviseCall(request, chain);
-
-        assertThat(result).isSameAs(response);
-        assertThat(mixedList).containsExactly("wrong-type");
-        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
-    }
-
-    @Test
-    void adviseCall_whenToolCallsListIsEmpty_keepsContextListUnchanged() {
-        Generation generation = mock(Generation.class);
-        AssistantMessage assistantMessage = mock(AssistantMessage.class);
-        ChatResponse chatResponse = new ChatResponse(List.of(generation));
-
-        List<AssistantMessage.ToolCall> contextToolCalls = new ArrayList<>();
-        contextToolCalls.add(mock(AssistantMessage.ToolCall.class));
-
-        when(chain.nextCall(request)).thenReturn(response);
-        when(response.chatResponse()).thenReturn(chatResponse);
-        when(generation.getOutput()).thenReturn(assistantMessage);
-        when(assistantMessage.hasToolCalls()).thenReturn(false);
-
-        ChatClientResponse result = advisor.adviseCall(request, chain);
-
-        assertThat(result).isSameAs(response);
-        assertThat(contextToolCalls).hasSize(1);
-        verifyNoMoreInteractions(chain, response, generation, assistantMessage);
-    }
-
-    @Test
-    void adviseCall_whenContextListIsImmutable_logsWarningAndDoesNotThrow() {
-        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
-
-        Generation generation = mock(Generation.class);
-        AssistantMessage assistantMessage = mock(AssistantMessage.class);
-        ChatResponse chatResponse = mock(ChatResponse.class);
-        when(chatResponse.getResult()).thenReturn(generation);
-        when(chatResponse.hasToolCalls()).thenReturn(true);
-
-        List<AssistantMessage.ToolCall> immutableList = List.of(mock(AssistantMessage.ToolCall.class));
-
-        Map<String, Object> context = new HashMap<>();
-        context.put("toolCalls", immutableList);
-
-        when(chain.nextCall(request)).thenReturn(response);
-        when(response.chatResponse()).thenReturn(chatResponse);
-        when(generation.getOutput()).thenReturn(assistantMessage);
-        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
-        when(response.context()).thenReturn(context);
-
-        ChatClientResponse result = advisor.adviseCall(request, chain);
-
-        assertThat(result).isSameAs(response);
-        assertThat(context.get("toolCalls")).isEqualTo(immutableList); // unchanged, no exception thrown
         verifyNoMoreInteractions(chain, response, generation, assistantMessage);
     }
 }

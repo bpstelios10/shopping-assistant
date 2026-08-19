@@ -1,8 +1,7 @@
 package org.learnings.ai.shoppingassistant.advisors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
@@ -18,17 +17,16 @@ import java.util.List;
 /**
  * Post-tool-calling advisor that captures executed tool calls from the model response
  * and appends them to the mutable {@code List<AssistantMessage.ToolCall>} stored under
- * the {@code "toolCalls"} key in the advisor request context.
+ * the {@code TOOL_CALLS_CONTEXT_KEY} key in the advisor request context.
  *
  * <p>Callers must pre-populate the context with a mutable list (e.g. via
- * {@code .param("toolCalls", new ArrayList<>())}) before invoking the chat client;
+ * {@code .param(TOOL_CALLS_CONTEXT_KEY, new ArrayList<>())}) before invoking the chat client;
  * if the key is missing, not a list, contains non-{@code ToolCall} elements, or is
  * immutable, the update is skipped (and logged) without failing the call.
  */
+@Slf4j
 @Component
 public class ToolCallAuditingAdvisor implements CallAdvisor {
-
-    private static final Logger log = LoggerFactory.getLogger(ToolCallAuditingAdvisor.class);
 
     /**
      * {@link ToolCallingAdvisor} has order = Ordered.HIGHEST_PRECEDENCE + 300
@@ -48,7 +46,7 @@ public class ToolCallAuditingAdvisor implements CallAdvisor {
         if (chatResponse != null && chatResponse.getResult() != null && chatResponse.hasToolCalls()) {
             List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
             log.debug("Tool calls: {}", toolCalls);
-            addToolCallsToResponseContext(response, toolCalls);
+            ToolCallAuditingValues.appendToolCalls(response.context(), toolCalls);
         }
 
         return response;
@@ -57,23 +55,5 @@ public class ToolCallAuditingAdvisor implements CallAdvisor {
     @Override
     public @NonNull String getName() {
         return "Tool Calls Auditor Advisor";
-    }
-
-    private static void addToolCallsToResponseContext(ChatClientResponse response, List<AssistantMessage.ToolCall> toolCalls) {
-        Object value = response.context().get("toolCalls");
-        if (value instanceof List<?> rawList) {
-            boolean allToolCalls = rawList.stream().allMatch(AssistantMessage.ToolCall.class::isInstance);
-            if (allToolCalls) {
-                @SuppressWarnings("unchecked")
-                List<AssistantMessage.ToolCall> contextToolCalls = (List<AssistantMessage.ToolCall>) rawList;
-                try {
-                    contextToolCalls.addAll(toolCalls);
-                } catch (UnsupportedOperationException e) {
-                    log.warn("Skipping toolCalls context update: context list is immutable", e);
-                }
-            } else {
-                log.warn("Skipping toolCalls context update: list contains non-ToolCall elements");
-            }
-        }
     }
 }
