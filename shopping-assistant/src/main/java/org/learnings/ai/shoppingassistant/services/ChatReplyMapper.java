@@ -9,14 +9,14 @@ import org.springframework.ai.chat.model.Generation;
 
 import java.util.List;
 
-final class ChatReplyMapper {
+public final class ChatReplyMapper {
 
     private static final String REASONING_CONTENT = "reasoningContent";
 
     private ChatReplyMapper() {
     }
 
-    static ChatReplyDto toChatReplyDto(AgentChatResult agentChatResponse, String conversationId) {
+    public static ChatReplyDto toChatReplyDto(AgentChatResult agentChatResponse, String conversationId) {
         ChatResponse chatResponse = agentChatResponse.chatResponse();
         ChatResponseMetadata metadata = chatResponse.getMetadata();
         List<AssistantMessage.ToolCall> toolCalls = agentChatResponse.toolCalls();

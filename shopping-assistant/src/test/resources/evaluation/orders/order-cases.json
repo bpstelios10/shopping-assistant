@@ -1,17 +1,12 @@
 [
   {
-    "id": "refund-policy",
-    "question": "What is your refund policy?",
-    "expectedDocuments": [
-      "refund-policy.pdf",
-      "returns.md"
-    ]
-  },
-  {
-    "id": "shipping-policy",
-    "question": "What is your shipping policy?",
-    "expectedDocuments": [
-      "shipping-policy.pdf", "faq.md", "refund-policy.pdf", "returns.md"
+    "id": "order-by-id-existing",
+    "question": "What is my order f47ac10b-58cc-4372-a567-0e02b2c3d002 status?",
+    "expectedTools": [
+      {
+        "name": "getOrderById",
+        "arguments": "{\"orderId\":\"f47ac10b-58cc-4372-a567-0e02b2c3d002\"}"
+      }
     ]
   }
 ]

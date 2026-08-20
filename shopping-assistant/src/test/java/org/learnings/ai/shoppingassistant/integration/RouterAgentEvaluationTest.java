@@ -12,7 +12,6 @@ import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -27,7 +26,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Tag("integration")
 @SpringBootTest
-@Import({EvaluationConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RouterAgentEvaluationTest {
 
@@ -40,7 +38,7 @@ class RouterAgentEvaluationTest {
 
     @ParameterizedTest
     @MethodSource("loadCases")
-    void supportAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(RoutingEvaluationCase testCase) {
+    void routerAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(RoutingEvaluationCase testCase) {
         RoutingEvaluator routingEvaluator = new RoutingEvaluator(objectMapper, testCase.expectedPlan());
 
         RouterAgent.RoutingPlan routingResponse = routerAgent.route(testCase.question());
