@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -69,6 +70,8 @@ class SupportAgentTest {
             when(advisorSpec.param(any(), any())).thenReturn(advisorSpec);
             consumer.accept(advisorSpec);
             verify(advisorSpec).param(ChatMemory.CONVERSATION_ID, CONVERSATION_ID);
+            verify(advisorSpec).param("agent", "support");
+            verify(advisorSpec).param(eq(TOOL_CALLS_CONTEXT_KEY), anyList());
 
             return requestSpec;
         }).when(requestSpec).advisors(any(Consumer.class));

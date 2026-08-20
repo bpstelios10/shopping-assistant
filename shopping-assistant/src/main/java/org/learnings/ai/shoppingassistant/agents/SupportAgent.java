@@ -5,7 +5,12 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+
+import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
 
 @Component
 public class SupportAgent implements Agent {
@@ -27,7 +32,8 @@ public class SupportAgent implements Agent {
                 .prompt(supportPromptProvider.buildPrompt(message))
                 .advisors(advisor -> advisor
                         .param(ChatMemory.CONVERSATION_ID, conversationId)
-                        .param("agent", name()))
+                        .param("agent", name())
+                        .param(TOOL_CALLS_CONTEXT_KEY, new ArrayList<AssistantMessage.ToolCall>()))
                 .call();
 
         ChatClientResponse chatClientResponse = responseSpec.chatClientResponse();
