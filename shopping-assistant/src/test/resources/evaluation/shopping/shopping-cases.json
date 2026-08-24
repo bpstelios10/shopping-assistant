@@ -6,10 +6,6 @@
       {
         "name": "searchProducts",
         "arguments": "{\"category\":\"CLOTHES\"}"
-      },
-      {
-        "name": "searchProducts",
-        "arguments": "name=searchProducts, arguments=[{\"category\":\"CLOTHES\",\"query\":\"clothing\"}]"
       }
     ]
   }

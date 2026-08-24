@@ -35,7 +35,9 @@ public class ProductTool implements ShoppingAgentTool {
 
     @Tool(description = "Search the store's catalog for products matching the shopper's request. "
             + "Extract any price limit or category the shopper mentions and pass them as filters. "
-            + "When nothing matches, return empty list and ask for more info.")
+            + "When nothing matches, return empty list and ask for more info."
+            + "If one or more relevant matches are returned, do not call this tool again for the same query/category in the same turn."
+            + "Do not call listAllProducts after successful targeted search unless user explicitly asks to browse all.")
     public List<Product> searchProducts(
             @ToolParam(description = "Free-text keywords describing the product the shopper wants, "
                     + "e.g. 'espresso maker' or 'running shoes'.")
