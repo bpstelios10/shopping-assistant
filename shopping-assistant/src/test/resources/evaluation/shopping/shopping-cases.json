@@ -1,0 +1,16 @@
+[
+  {
+    "id": "shopping-by-category",
+    "question": "Can you show me some of your clothing?",
+    "expectedTools": [
+      {
+        "name": "searchProducts",
+        "arguments": "{\"category\":\"CLOTHES\"}"
+      },
+      {
+        "name": "searchProducts",
+        "arguments": "name=searchProducts, arguments=[{\"category\":\"CLOTHES\",\"query\":\"clothing\"}]"
+      }
+    ]
+  }
+]
