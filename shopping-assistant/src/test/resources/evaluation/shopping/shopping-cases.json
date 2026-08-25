@@ -8,5 +8,15 @@
         "arguments": "{\"category\":\"CLOTHES\"}"
       }
     ]
+  },
+  {
+    "id": "shopping-by-name",
+    "question": "Do you have any socks?",
+    "expectedTools": [
+      {
+        "name": "searchProducts",
+        "arguments": "{\"query\":\"socks\"}"
+      }
+    ]
   }
 ]
