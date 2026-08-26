@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.integration;
+package org.learnings.ai.shoppingassistant.integration.evaluation;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
@@ -6,6 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.RouterAgent;
+import org.learnings.ai.shoppingassistant.integration.evaluation.cases.RoutingEvaluationCase;
+import org.learnings.ai.shoppingassistant.integration.evaluation.evaluators.RoutingEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.evaluation.EvaluationRequest;

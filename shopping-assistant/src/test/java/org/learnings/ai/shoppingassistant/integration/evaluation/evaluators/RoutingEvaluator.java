@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.integration;
+package org.learnings.ai.shoppingassistant.integration.evaluation.evaluators;
 
 import org.jspecify.annotations.NonNull;
 import org.learnings.ai.shoppingassistant.agents.RouterAgent;

@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.integration;
+package org.learnings.ai.shoppingassistant.integration.evaluation;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.agents.SupportAgent;
+import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
+import org.learnings.ai.shoppingassistant.integration.evaluation.config.EvaluationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;

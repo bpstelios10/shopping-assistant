@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.integration;
+package org.learnings.ai.shoppingassistant.integration.evaluation;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.agents.OrderAgent;
+import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
+import org.learnings.ai.shoppingassistant.integration.evaluation.evaluators.ToolCallingEvaluator;
 import org.learnings.ai.shoppingassistant.services.ChatReplyMapper;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.slf4j.Logger;
@@ -60,7 +62,7 @@ class OrderAgentEvaluationTest {
 
     @ParameterizedTest
     @MethodSource("loadCases")
-    void orderAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(FunctionalAgentEvaluationCase testCase) {
+    void orderAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(EvaluationCase testCase) {
         ToolCallingEvaluator toolCallingEvaluator = new ToolCallingEvaluator(objectMapper, testCase.expectedTools());
         server.reset();
         String orderId = "f47ac10b-58cc-4372-a567-0e02b2c3d002";
@@ -98,9 +100,7 @@ class OrderAgentEvaluationTest {
     private Stream<Arguments> loadCases() throws IOException {
         var resource = new ClassPathResource("evaluation/orders/order-cases.json");
 
-        List<FunctionalAgentEvaluationCase> cases =
-                objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
-                });
+        List<EvaluationCase> cases = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {});
 
         return cases.stream().map(c -> arguments(named(c.id(), c)));
     }

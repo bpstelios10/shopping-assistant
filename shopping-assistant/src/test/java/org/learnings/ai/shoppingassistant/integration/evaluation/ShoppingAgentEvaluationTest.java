@@ -1,4 +1,4 @@
-package org.learnings.ai.shoppingassistant.integration;
+package org.learnings.ai.shoppingassistant.integration.evaluation;
 
 import org.hamcrest.Matchers;
 import org.jspecify.annotations.NonNull;
@@ -11,6 +11,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.agents.ShoppingAgent;
+import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
+import org.learnings.ai.shoppingassistant.integration.evaluation.evaluators.ToolCallingEvaluator;
 import org.learnings.ai.shoppingassistant.services.ChatReplyMapper;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.slf4j.Logger;
@@ -82,7 +84,7 @@ class ShoppingAgentEvaluationTest {
 
     @ParameterizedTest
     @MethodSource("loadCases")
-    void shoppingAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(FunctionalAgentEvaluationCase testCase) {
+    void shoppingAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(EvaluationCase testCase) {
         ToolCallingEvaluator toolCallingEvaluator = new ToolCallingEvaluator(objectMapper, testCase.expectedTools());
 //        // because we use mock products service, we need to have both cases here unfortunately
         server.expect(ExpectedCount.manyTimes(),
@@ -113,9 +115,7 @@ class ShoppingAgentEvaluationTest {
     private Stream<Arguments> loadCases() throws IOException {
         var resource = new ClassPathResource("evaluation/shopping/shopping-cases.json");
 
-        List<FunctionalAgentEvaluationCase> cases =
-                objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
-                });
+        List<EvaluationCase> cases = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() { });
 
         return cases.stream().map(c -> arguments(named(c.id(), c)));
     }
