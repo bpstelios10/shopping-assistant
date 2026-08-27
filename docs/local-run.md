@@ -26,15 +26,16 @@ docker compose -f docker-compose.yml -f docker-compose.mac.yml up postgres redis
 
 The container uses `restart: unless-stopped`, so this is usually one-time per machine.
 
-### 2) Start the app stack
+### 2) Start the model runtime
 
 #### Linux / Windows (Ollama in Docker)
 
 ```shell
-docker compose up --build
+docker compose up -d ollama ollama-init
 ```
 
-Ollama and `qwen3:8b` are managed in Docker. The model is stored in a named volume and is downloaded once.
+Ollama and the models (`qwen3:8b`, `nomic-embed-text`, `qwen2.5:3b-instruct`) are managed in Docker.
+Models are stored in a named volume and downloaded once by the `ollama-init` service.
 
 #### Mac (Apple Silicon, native Ollama)
 
@@ -47,16 +48,23 @@ Running Ollama in Docker on macOS is CPU-only. For Metal/GPU acceleration, run O
 brew install ollama
 brew services stop ollama
 
-# 2. Pull the model (once)
+# 2. Pull the models (once)
 ollama serve &
 ollama pull qwen3:8b
+ollama pull nomic-embed-text
 pkill ollama
 
 # 3. Start Ollama before the app
 ollama serve &
+```
 
-# 4. Start app services
-docker compose -f docker-compose.yml -f docker-compose.mac.yml up --build
+### 3) Start the application
+
+The application itself is not part of `docker-compose.yml`; run it from the Gradle project:
+
+```shell
+cd shopping-assistant
+./gradlew bootRun
 ```
 
 App services connect to Ollama through the OpenAI-compatible API (`/v1`):

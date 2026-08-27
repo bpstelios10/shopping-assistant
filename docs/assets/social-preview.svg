@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1280" height="6" fill="#6db33f"/>
+
+  <text x="80" y="150" fill="#6db33f" font-size="24" font-weight="600" letter-spacing="4">SPRING AI · JAVA 25</text>
+
+  <text x="80" y="238" fill="#ffffff" font-size="68" font-weight="700">Shopping Assistant</text>
+  <text x="80" y="300" fill="#8b949e" font-size="32" font-weight="400">A multi-agent LLM system, built like production software</text>
+
+  <!-- capability chips -->
+  <g font-size="21" font-weight="500">
+    <rect x="80"  y="360" width="200" height="52" rx="26" fill="#21262d" stroke="#30363d"/>
+    <text x="180" y="393" fill="#e6edf3" text-anchor="middle">Agent Routing</text>
+
+    <rect x="300" y="360" width="192" height="52" rx="26" fill="#21262d" stroke="#30363d"/>
+    <text x="396" y="393" fill="#e6edf3" text-anchor="middle">Tool Calling</text>
+
+    <rect x="512" y="360" width="230" height="52" rx="26" fill="#21262d" stroke="#30363d"/>
+    <text x="627" y="393" fill="#e6edf3" text-anchor="middle">RAG · pgvector</text>
+
+    <rect x="762" y="360" width="152" height="52" rx="26" fill="#21262d" stroke="#30363d"/>
+    <text x="838" y="393" fill="#e6edf3" text-anchor="middle">Memory</text>
+
+    <rect x="934" y="360" width="252" height="52" rx="26" fill="#21262d" stroke="#30363d"/>
+    <text x="1060" y="393" fill="#e6edf3" text-anchor="middle">LLM Evaluation</text>
+  </g>
+
+  <!-- flow strip -->
+  <g font-size="22" fill="#8b949e">
+    <text x="80" y="510">Router  →  Shopping · Order · Support Agents  →  Tools &amp; Vector Store</text>
+  </g>
+
+  <line x1="80" y1="548" x2="1200" y2="548" stroke="#30363d" stroke-width="1"/>
+  <text x="80" y="592" fill="#6e7681" font-size="21">Ollama · vLLM · OpenAI-compatible  ·  Redis  ·  Postgres  ·  Prometheus</text>
+</svg>
+
