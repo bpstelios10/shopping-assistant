@@ -2,7 +2,6 @@ package org.learnings.ai.shoppingassistant.services.memory;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -51,43 +50,11 @@ class UserMemoryServiceImplTest {
     }
 
     @Test
-    void updateProfile_whenNoExistingProfile_savesOnlyNewFields() {
-        when(repository.findById("u1")).thenReturn(Optional.empty());
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+    void updateProfile_delegatesToRepository() {
+        doNothing().when(repository).merge("u1", Map.of("currency", "EUR"));
 
         service.updateProfile("u1", Map.of("currency", "EUR"));
 
-        verify(repository).save(org.mockito.ArgumentMatchers.eq("u1"), captor.capture());
-        assertThat(captor.getValue()).containsEntry("currency", "EUR");
-        verifyNoMoreInteractions(repository);
-    }
-
-    @Test
-    void updateProfile_whenExistingProfile_mergesFields() {
-        when(repository.findById("u1")).thenReturn(Optional.of(Map.of("size", "M")));
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-
-        service.updateProfile("u1", Map.of("currency", "EUR"));
-
-        verify(repository).save(org.mockito.ArgumentMatchers.eq("u1"), captor.capture());
-        assertThat(captor.getValue())
-                .containsEntry("size", "M")
-                .containsEntry("currency", "EUR");
-        verifyNoMoreInteractions(repository);
-    }
-
-    @Test
-    void updateProfile_whenExistingProfileHasConflictingKey_overwritesWithNewValue() {
-        when(repository.findById("u1")).thenReturn(Optional.of(Map.of("currency", "USD")));
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-
-        service.updateProfile("u1", Map.of("currency", "EUR"));
-
-        verify(repository).save(org.mockito.ArgumentMatchers.eq("u1"), captor.capture());
-        assertThat(captor.getValue()).containsEntry("currency", "EUR");
         verifyNoMoreInteractions(repository);
     }
 }

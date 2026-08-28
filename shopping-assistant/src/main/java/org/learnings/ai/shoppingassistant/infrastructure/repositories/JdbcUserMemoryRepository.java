@@ -36,14 +36,13 @@ public class JdbcUserMemoryRepository implements UserMemoryRepository {
     }
 
     @Override
-    public void save(String userId, Map<String, Object> profile) {
+    public void merge(String userId, Map<String, Object> updates) {
         jdbc.update("""
                 INSERT INTO user_memory (user_id, profile, updated_at)
                 VALUES (?, ?::jsonb, now())
                 ON CONFLICT (user_id) DO UPDATE
-                SET profile = EXCLUDED.profile, updated_at = now()
-                """,
-                userId, serialize(profile));
+                SET profile = user_memory.profile || EXCLUDED.profile, updated_at = now()
+                """, userId, serialize(updates));
     }
 
     private Map<String, Object> parse(String json) {

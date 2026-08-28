@@ -5,7 +5,7 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 
 ## Correctness & cost
 
-- [ ] **Atomic profile merge.** `UserMemoryServiceImpl.updateProfile` does read-modify-write across two round trips — concurrent turns can drop a preference. Move the merge into Postgres: `SET profile = user_memory.profile || EXCLUDED.profile`.
+- [x] **Atomic profile merge.** `UserMemoryServiceImpl.updateProfile` does read-modify-write across two round trips — concurrent turns can drop a preference. Move the merge into Postgres: `SET profile = user_memory.profile || EXCLUDED.profile`.
 - [ ] **Bound tool payloads.** `listAllProducts` / `searchProducts` serialize the full catalog into the context. Add a hard result cap, return a projection (`id, name, price, category`) instead of full `Product`, and signal truncation to the model.
 - [ ] **Move summarization off the request path.** `SummaryBufferChatMemory.add()` blocks on `chatModel.call()`, adding a full inference to every ~10th turn. Make it async.
 - [ ] **Use the small model where it belongs.** `qwen2.5:3b-instruct` is pulled in compose but unused; router and summarization are both classification-shaped jobs that don't need the 8B.

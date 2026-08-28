@@ -2,7 +2,6 @@ package org.learnings.ai.shoppingassistant.services.memory;
 
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,10 +27,6 @@ public class UserMemoryServiceImpl implements UserMemoryService {
 
     @Override
     public void updateProfile(String userId, Map<String, Object> updates) {
-        Map<String, Object> existing = repository.findById(userId)
-                .map(HashMap::new)
-                .orElseGet(HashMap::new);
-        existing.putAll(updates);
-        repository.save(userId, existing);
+        repository.merge(userId, updates);
     }
 }
