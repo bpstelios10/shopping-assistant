@@ -109,7 +109,7 @@ class ShoppingAgentEvaluationTest {
         assertThat(relevance.isPass())
                 .as("Answer should be relevant")
                 .isTrue();
-        assertThat(relevance.getScore()).isGreaterThan(0.3f);
+        assertThat(relevance.getScore()).isGreaterThan(0.7f);
     }
 
     private Stream<Arguments> loadCases() throws IOException {

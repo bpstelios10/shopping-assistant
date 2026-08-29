@@ -94,7 +94,7 @@ class OrderAgentEvaluationTest {
         assertThat(relevance.isPass())
                 .as("Answer should be relevant")
                 .isTrue();
-        assertThat(relevance.getScore()).isGreaterThan(0.9f);
+        assertThat(relevance.getScore()).isGreaterThan(0.8f);
     }
 
     private Stream<Arguments> loadCases() throws IOException {

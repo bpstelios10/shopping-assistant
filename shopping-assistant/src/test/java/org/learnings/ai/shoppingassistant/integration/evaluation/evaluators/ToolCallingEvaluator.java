@@ -58,6 +58,7 @@ public class ToolCallingEvaluator implements Evaluator {
             actualToolCalls.remove(tool);
         }
 
+        // the actualToolCalls remaining are the ones not in expectedTools. use them to change the score:
         float score = 1f - actualToolCalls.size() / 10f;
 
         return new EvaluationResponse(true, score, "Correct called tools", new HashMap<>());

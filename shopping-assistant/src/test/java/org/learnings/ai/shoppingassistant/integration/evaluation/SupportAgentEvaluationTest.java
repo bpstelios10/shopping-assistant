@@ -79,12 +79,13 @@ class SupportAgentEvaluationTest {
 
         EvaluationRequest evaluationRequest = new EvaluationRequest(testCase.question(), documents, answer);
         EvaluationResponse relevance = relevancyEvaluator.evaluate(evaluationRequest);
+        // FactCheckingEvaluator doesn't produce any score so it defaults to 0.
         EvaluationResponse groundedness = factCheckingEvaluator.evaluate(evaluationRequest);
         // PERFORMANCE TESTING: FOR CHANGES OF PROMPTS OR MODELS. THEN COMPARE BEFORE AND AFTER
         log.warn("Test: {} - Relevance: pass={}, score={}, feedback={}.",
                 testCase.id(), relevance.isPass(), relevance.getScore(), relevance.getFeedback());
-        log.warn("Test: {} - Groundedness: pass={}, score={}, feedback={}.",
-                testCase.id(), groundedness.isPass(), groundedness.getScore(), groundedness.getFeedback());
+        log.warn("Test: {} - Groundedness: pass={}, feedback={}.",
+                testCase.id(), groundedness.isPass(), groundedness.getFeedback());
 
         assertThat(relevance.isPass())
                 .as("Answer should be relevant")
@@ -94,7 +95,6 @@ class SupportAgentEvaluationTest {
         assertThat(groundedness.isPass())
                 .as("Answer should be grounded")
                 .isTrue();
-        assertThat(groundedness.getScore()).isLessThan(0.1f);
     }
 
     private Stream<Arguments> loadCases() throws IOException {
