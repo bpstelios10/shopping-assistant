@@ -1,33 +1,32 @@
 package org.learnings.ai.shoppingassistant.rag.loaddocs;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @Slf4j
-@SpringBootApplication
-public class RagIngestionRunner {
+@Component
+@Profile("ingest")
+public class RagIngestionRunner implements ApplicationRunner {
 
-    static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            System.err.println("Usage: RagIngestionRunner <folder>");
-            System.exit(1);
+    private final DocumentImporter importer;
+
+    public RagIngestionRunner(DocumentImporter importer) {
+        this.importer = importer;
+    }
+
+    @Override
+    public void run(ApplicationArguments args) throws IOException {
+        List<String> folders = args.getNonOptionArgs();
+        if (folders.isEmpty()) {
+            throw new IllegalArgumentException("Usage: --spring.profiles.active=ingest <folder>");
         }
-
-        log.info("Working Directory: [{}]", System.getProperty("user.dir"));
-        log.info("folder requested: [{}]", args[0]);
-
-        try (ConfigurableApplicationContext ctx = new SpringApplicationBuilder(RagIngestionRunner.class)
-                .web(WebApplicationType.NONE)   // no web server
-                .run(args)) {
-
-            DocumentImporter importer = ctx.getBean(DocumentImporter.class);
-            importer.reimport(Path.of(args[0]));
-        }
+        importer.reimport(Path.of(folders.getFirst()));
     }
 }

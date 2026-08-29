@@ -3,8 +3,9 @@
 ## What exists so far
 
 - RAG ingestion is implemented in `shopping-assistant/src/main/java/org/learnings/ai/shoppingassistant/rag/loaddocs`.
-- `RagIngestionRunner` is a standalone Spring Boot entrypoint for document loading.
-- It runs with `WebApplicationType.NONE` and uses `DocumentImporter` to load files into `vector_store`.
+- `RagIngestionRunner` is a Spring Boot Runner for document loading.
+- It runs with profile 'ingest' that has `WebApplicationType.NONE` and uses `DocumentImporter` to load files into
+  `vector_store`.
 - It is for manual ingestion and is not part of the normal runtime flow of `ShoppingAssistantApplication`.
 
 ## Loader behavior
@@ -20,7 +21,9 @@ Simply use the IntelliJ runners. Or in command line:
 
 ```shell
 ./gradlew :shopping-assistant:classes
-java -cp shopping-assistant/build/classes/java/main:shopping-assistant/build/resources/main org.learnings.ai.shoppingassistant.rag.loaddocs.RagIngestionRunner <path-to-folder>
+java -jar service.jar --spring.profiles.active=ingest knowledge/
+# or
+./gradlew bootRun --args='--spring.profiles.active=ingest knowledge/'
 ```
 
 ## DB cheat sheet

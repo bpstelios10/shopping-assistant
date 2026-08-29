@@ -46,7 +46,7 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
   decisions on a normalized-message hash.
 - [ ] **Idempotent RAG ingestion.** `DELETE FROM vector_store` + reload leaves a window with no knowledge base and
   re-embeds unchanged files. Hash per document, skip unchanged, replace per document. Add doc version to chunk metadata.
-- [ ] **Move `RagIngestionRunner` out of the scanned package** — a second `@SpringBootApplication` under the main
+- [x] **Move `RagIngestionRunner` out of the scanned package** — a second `@SpringBootApplication` under the main
   package is a component-scan/context-resolution hazard.
 
 ## Code quality

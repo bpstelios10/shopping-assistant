@@ -5,6 +5,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Service
+@Profile("ingest")
 public class DocumentImporter {
 
     private final VectorStore vectorStore;
