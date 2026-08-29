@@ -9,8 +9,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.learnings.ai.shoppingassistant.agents.Agent;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
-import org.learnings.ai.shoppingassistant.agents.ShoppingAgent;
+import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
 import org.learnings.ai.shoppingassistant.integration.evaluation.evaluators.ToolCallingEvaluator;
 import org.learnings.ai.shoppingassistant.services.ChatReplyMapper;
@@ -22,6 +23,7 @@ import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -51,13 +53,14 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 @Tag("integration")
 @SpringBootTest(properties = {"clients.services.products.base-url=http://shopping-assistant"})
+@Import({TestRestClientConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ShoppingAgentEvaluationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ShoppingAgentEvaluationTest.class);
 
     @Autowired
-    private ShoppingAgent shoppingAgent;
+    private Agent shoppingAgent;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -115,7 +118,8 @@ class ShoppingAgentEvaluationTest {
     private Stream<Arguments> loadCases() throws IOException {
         var resource = new ClassPathResource("evaluation/shopping/shopping-cases.json");
 
-        List<EvaluationCase> cases = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() { });
+        List<EvaluationCase> cases = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
+        });
 
         return cases.stream().map(c -> arguments(named(c.id(), c)));
     }

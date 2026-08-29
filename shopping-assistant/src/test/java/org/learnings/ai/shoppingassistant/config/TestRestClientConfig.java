@@ -16,7 +16,10 @@ public class TestRestClientConfig {
     RestClient.Builder builder() {
         RestClient.Builder builder = RestClient.builder().baseUrl("http://shopping-assistant");
 
-        mockServer = MockRestServiceServer.bindTo(builder).build();
+        mockServer = MockRestServiceServer
+                .bindTo(builder)
+                .ignoreExpectOrder(true)
+                .build();
 
         return builder;
     }

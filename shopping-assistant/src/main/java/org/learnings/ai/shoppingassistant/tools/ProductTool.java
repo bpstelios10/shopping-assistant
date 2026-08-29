@@ -45,7 +45,7 @@ public class ProductTool implements ShoppingAgentTool {
             @ToolParam(required = false, description = "Maximum price the shopper is willing to pay, if mentioned.")
             Double maxPrice,
             @ToolParam(required = false, description = "Product category to filter by, if mentioned. "
-                    + "Must be one of the values returned by the listCategories tool — call listCategories "
+                    + "Must be ONE of the values returned by the listCategories tool — call listCategories "
                     + "first to get the valid categories, and only pass a value from that list.")
             String category) {
         List<Product> results = productService.search(new ProductSearchCriteria(query, maxPrice, category));

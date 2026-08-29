@@ -8,6 +8,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 public class EvaluationConfig {
 
     @Bean
+    @Primary
     ChatClient.Builder evaluationChatClientBuilder(ChatModel chatModel) {
         ChatOptions.Builder<?> evaluationChatOptionsBuilder = ChatOptions.builder()
 //                .model("qwen2.5:3b-instruct") // task get a better model for evaluations

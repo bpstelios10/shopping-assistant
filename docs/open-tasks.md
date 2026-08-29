@@ -51,7 +51,7 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 
 ## Code quality
 
-- [ ] **Extract `AbstractAgent`.** The three agents differ only in name, prompt provider and tools; everything else is
+- [x] **Extract `AbstractAgent`.** The three agents differ only in name, prompt provider and tools; everything else is
   copy-paste, including the audit-list seeding that callers must remember to do. Replace
   `RuntimeException("Agent didnt reply")` with a domain exception mapped in `ControllerExceptionHandler`.
 - [ ] **Don't silently broaden searches.** `ProductTool.searchProducts` drops the query when a category search is empty,
