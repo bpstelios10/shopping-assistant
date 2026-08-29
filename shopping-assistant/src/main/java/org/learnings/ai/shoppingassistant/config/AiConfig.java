@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingAdvisor;
 import org.learnings.ai.shoppingassistant.infrastructure.repositories.RedisChatMemoryRepositoryObservationDecorator;
 import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
+import org.learnings.ai.shoppingassistant.tools.BoundedToolCallingManager;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -26,6 +27,7 @@ import org.springframework.ai.tool.execution.ToolExecutionException;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -38,14 +40,17 @@ import java.util.Map;
 public class AiConfig {
 
     @Bean
-    ToolCallingManager toolCallingManager(ObservationRegistry observationRegistry) {
-        return DefaultToolCallingManager.builder()
+    ToolCallingManager toolCallingManager(ObservationRegistry observationRegistry,
+                                          @Value("${shopping-assistant.tools.max-iterations:5}") int maxIterations) {
+        ToolCallingManager delegate = DefaultToolCallingManager.builder()
                 .observationRegistry(observationRegistry)
                 .build();
+
+        return new BoundedToolCallingManager(delegate, maxIterations);
     }
 
-    @Bean
     // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
+    @Bean
     ChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient,
                                                    RedisChatMemoryProperties properties,
                                                    RedisChatMemoryAutoConfiguration redisAutoConfig,
@@ -68,9 +73,9 @@ public class AiConfig {
                 .build();
     }
 
+    // builder beans are singletons. make it prototype to avoid leaks
     @Bean
     @Scope("prototype")
-    // builder beans are singletons. make it prototype to avoid leaks
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel,
                                                        MessageChatMemoryAdvisor memoryAdvisor,
                                                        ObservationRegistry observationRegistry,
@@ -81,7 +86,7 @@ public class AiConfig {
     }
 
     /**
-     * Tools call an external backend that can fail (network, NPE, etc.). By default Spring AI feeds the raw
+     * Tools call an external backend that can fail (network, NPE, etc.). By default, Spring AI feeds the raw
      * exception text back to the model, which makes it flail and re-open earlier questions. Return a clean,
      * bounded message instead so the model degrades gracefully and stays on the current turn.
      */

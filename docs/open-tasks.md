@@ -40,7 +40,7 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
   setup/teardown from tests.
 - [ ] **Timeout + circuit breaker on the model call.** Downstream REST clients have both; the LLM (slowest, most
   failure-prone dependency) has neither. With `tomcat.threads.max=500`, a hung inference endpoint exhausts the pool.
-- [ ] **Cap tool-call iterations per turn.** Nothing bounds tool ping-pong today — the "do not call this tool again"
+- [x] **Cap tool-call iterations per turn.** Nothing bounds tool ping-pong today — the "do not call this tool again"
   text in tool descriptions is a prompt-level workaround for a missing runtime guard.
 - [ ] **Cheap router short-circuit.** Greetings and obvious keyword matches shouldn't cost an inference; cache routing
   decisions on a normalized-message hash.

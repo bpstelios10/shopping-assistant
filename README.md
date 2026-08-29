@@ -63,6 +63,7 @@ Details: [architecture](docs/architecture.md).
 ## Docs
 
 - [Architecture design](docs/architecture.md)
+- [Tools design](docs/tools.md)
 - [Memory design](docs/memory.md)
 - [RAG ingestion flow](docs/RAG.md)
 - [Prompts flow](docs/prompts.md)
