@@ -29,6 +29,7 @@ public class ProductServiceImpl implements ProductService {
         return productClient.getProductById(productId);
     }
 
+    // only cash search per category. or else this cache will get huge. small tuning for now.
     @Override
     @Cacheable(
             value = "products-per-category",

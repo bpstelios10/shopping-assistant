@@ -1,6 +1,5 @@
 package org.learnings.ai.shoppingassistant.agents.prompts;
 
-import org.apache.logging.log4j.util.Strings;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryService;
 import org.learnings.ai.shoppingassistant.services.products.ProductService;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -34,7 +33,7 @@ public class ShoppingPromptProvider extends AbstractPromptProvider implements Pr
                         "storeName", "Awesome Store",
                         "today", now(),
                         "language", "English",
-                        "categories", Strings.join(productService.getAllCategories(), ',')
+                        "categories", String.join(",", productService.getAllCategories())
                 )
         );
 

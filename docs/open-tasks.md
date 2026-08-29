@@ -67,7 +67,7 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 - [ ] **Externalize magic numbers** (window `10`, buffer `20`, threshold `0.6`, `topK=4`, temperatures) to
   `@ConfigurationProperties` — also enables parameter sweeps in the eval harness.
 - [ ] **Move `extraBody(think=false)` to config** — Ollama-specific option hardcoded in a model-agnostic design.
-- [ ] Replace `org.apache.logging.log4j.util.Strings` with `String.isBlank()` / `String.join()`.
+- [x] Replace `org.apache.logging.log4j.util.Strings` with `String.isBlank()` / `String.join()`.
 
 ## Notes
 

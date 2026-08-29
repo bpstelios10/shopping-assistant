@@ -20,10 +20,8 @@
 Simply use the IntelliJ runners. Or in command line:
 
 ```shell
-./gradlew :shopping-assistant:classes
-java -jar service.jar --spring.profiles.active=ingest knowledge/
-# or
-./gradlew bootRun --args='--spring.profiles.active=ingest knowledge/'
+# the path of the knowledge folder is relative to the working directory of the gradle process
+./gradlew bootRun --args='--spring.profiles.active=ingest ../knowledge'
 ```
 
 ## DB cheat sheet

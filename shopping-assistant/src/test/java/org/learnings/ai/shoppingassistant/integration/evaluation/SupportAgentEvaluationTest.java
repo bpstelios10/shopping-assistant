@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.Agent;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
-import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
 import org.learnings.ai.shoppingassistant.integration.evaluation.config.EvaluationConfig;
 import org.slf4j.Logger;

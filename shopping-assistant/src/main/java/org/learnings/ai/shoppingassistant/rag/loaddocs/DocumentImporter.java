@@ -1,6 +1,7 @@
 package org.learnings.ai.shoppingassistant.rag.loaddocs;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -31,12 +32,11 @@ public class DocumentImporter {
     }
 
     public void reimport(Path folder) throws IOException {
+        List<Path> files = validateFolderAndGetFilePaths(folder);
+
         log.info("reimporting from [{}]. first deleting everything from vector_store", folder);
         jdbcTemplate.update("DELETE FROM vector_store");   // wipe
-
-        try (Stream<Path> files = Files.list(folder)) {
-            files.filter(Files::isRegularFile).forEach(this::importFile);
-        }
+        files.forEach(this::importFile);
     }
 
     private void importFile(Path file) {
@@ -44,8 +44,21 @@ public class DocumentImporter {
         var reader = new TikaDocumentReader(new FileSystemResource(file));
 
         List<Document> chunks = splitter.apply(reader.get());
-        chunks.forEach(d -> d.getMetadata().put("filename", file.getFileName().toString()));
         vectorStore.add(chunks);
         log.info("Imported file successfully.");
+    }
+
+    private static @NonNull List<Path> validateFolderAndGetFilePaths(Path folder) throws IOException {
+        if (!Files.isDirectory(folder)) {
+            throw new IllegalArgumentException("Not a directory: " + folder.toAbsolutePath());
+        }
+        List<Path> files;
+        try (Stream<Path> stream = Files.list(folder)) {
+            files = stream.filter(Files::isRegularFile).toList();
+        }
+        if (files.isEmpty()) {
+            throw new IllegalArgumentException("No files found in " + folder.toAbsolutePath());
+        }
+        return files;
     }
 }

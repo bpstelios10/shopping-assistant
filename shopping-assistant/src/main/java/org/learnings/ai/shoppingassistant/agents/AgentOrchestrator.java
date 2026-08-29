@@ -1,9 +1,9 @@
 package org.learnings.ai.shoppingassistant.agents;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.learnings.ai.shoppingassistant.services.memory.CurrentUser;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class AgentOrchestrator {
     }
 
     public AgentChatResult chat(String message, String conversationId) {
-        conversationId = Strings.isBlank(conversationId) ? UUID.randomUUID().toString() : conversationId;
+        conversationId = !StringUtils.hasText(conversationId) ? UUID.randomUUID().toString() : conversationId;
         final String userId = resolveUserId();
         final String convId = userId + ":" + conversationId;
         log.debug("chat with conversation-id: [{}]", convId);
