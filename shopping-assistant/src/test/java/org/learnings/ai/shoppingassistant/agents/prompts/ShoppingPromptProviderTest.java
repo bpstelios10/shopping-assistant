@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ShoppingPromptProviderTest {
 
+    private static final String USER_ID = "anon:sess-abc";
+
     @Mock
     private ProductService productService;
     @Mock
@@ -41,7 +43,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .startsWith("You are a helpful shopping assistant for")
@@ -62,7 +64,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .contains("Current language: English")
@@ -81,7 +83,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .contains("Available product categories: ");
@@ -92,7 +94,7 @@ class ShoppingPromptProviderTest {
     void buildPrompt_whenCategoriesMissing_throws() {
         when(productService.getAllCategories()).thenReturn(null);
 
-        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message"))
+        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message", USER_ID))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage(null);
 
@@ -103,7 +105,7 @@ class ShoppingPromptProviderTest {
     void buildPrompt_whenCategoriesCallThrows_throws() {
         doThrow(new RuntimeException("timeout")).when(productService).getAllCategories();
 
-        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message"))
+        assertThatThrownBy(() -> shoppingPromptProvider.buildPrompt("some user message", USER_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("timeout");
 
@@ -115,7 +117,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of("categ1", "category 2"));
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("do you have red shoes?");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("do you have red shoes?", USER_ID);
 
         assertThat(prompt.getUserMessage().getText()).isEqualTo("do you have red shoes?");
         verifyNoMoreInteractions(productService, userMemoryService);
@@ -126,7 +128,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.of("currency=EUR, size=M"));
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("some message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
@@ -140,7 +142,7 @@ class ShoppingPromptProviderTest {
         when(productService.getAllCategories()).thenReturn(List.of());
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = shoppingPromptProvider.buildPrompt("some message");
+        Prompt prompt = shoppingPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)

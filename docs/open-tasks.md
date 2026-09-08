@@ -19,6 +19,8 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
   NOTE: could make the add async, but i need to handle race-conditions. so maybe a lock is needed. A per-conversation
   lock or a "summarization in progress" flag.
   NOTE 2: i can switch to `qwen2.5:3b-instruct`, but i need to add summarization eval cases first.
+  NOTE 3: **more urgent since streaming landed** — the memory advisor aggregates and persists on the thread that emits
+  completion, so this now blocks a Reactor thread, not just the servlet thread.
 - [ ] **Deterministic prompt text.** `getProfileSummary` joins a `HashMap` — key order isn't stable, so the same profile
   renders differently across runs. Sort keys (breaks prompt caching and eval reproducibility).
 
@@ -36,16 +38,14 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 
 ## Reliability
 
-- [ ] **Replace `CurrentUser` ThreadLocal with Spring AI `ToolContext`** — thread-safe, explicit, removes static
-  setup/teardown from tests.
+- [x] **Replace `CurrentUser` ThreadLocal with Spring AI `ToolContext`** — thread-safe, explicit, removes static
+  setup/teardown from tests. Done as part of streaming: a ThreadLocal cannot survive the Reactor thread hops.
 - [ ] **Timeout + circuit breaker on the model call.** Downstream REST clients have both; the LLM (slowest, most
   failure-prone dependency) has neither. With `tomcat.threads.max=500`, a hung inference endpoint exhausts the pool.
 - [x] **Cap tool-call iterations per turn.** Nothing bounds tool ping-pong today — the "do not call this tool again"
   text in tool descriptions is a prompt-level workaround for a missing runtime guard.
 - [ ] **Cheap router short-circuit.** Greetings and obvious keyword matches shouldn't cost an inference; cache routing
   decisions on a normalized-message hash.
-- [ ] **Idempotent RAG ingestion.** `DELETE FROM vector_store` + reload leaves a window with no knowledge base and
-  re-embeds unchanged files. Hash per document, skip unchanged, replace per document. Add doc version to chunk metadata.
 - [x] **Move `RagIngestionRunner` out of the scanned package** — a second `@SpringBootApplication` under the main
   package is a component-scan/context-resolution hazard.
 
@@ -74,4 +74,3 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 The `LATEST_TURN_GUARD` in `PromptDecorator`, the duplicate guard in the RAG prompt template, and the anti-repetition
 text in tool descriptions are all workarounds for weak instruction-following in the local 8B model — not permanent
 design. Revisit when the target model changes.
-

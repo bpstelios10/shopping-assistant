@@ -40,17 +40,38 @@ no state and is thread-safe. On breach it degrades in two stages rather than thr
 An exception would mean a 500 after the shopper already paid for several inferences, which is strictly worse than a
 partial answer.
 
+## Request context
+
+Tools are singletons, but they need per-request state (the caller's id). That is passed through Spring AI's
+`ToolContext` — see `ToolContextValues` — which the agent populates via `.toolContext(...)`:
+
+```java
+public String saveUserPreference(String key, String value, ToolContext toolContext) {
+    Optional<String> userId = ToolContextValues.userId(toolContext);
+```
+
+Two reasons this is not a `ThreadLocal`:
+
+- The `ToolContext` parameter is **not part of the schema advertised to the model**, so the caller identity cannot be
+  spoofed through a tool argument — unlike passing `userId` as a `@ToolParam`.
+- It travels with the request, not the thread, so it survives the thread hops that streaming and tool execution
+  introduce. A `ThreadLocal` set on the servlet thread is already cleared by the time a Reactor thread executes the
+  tool (see `streaming.md`).
+
 ## Auditing
 
 `ToolCallAuditingAdvisor` records which tools were actually invoked during a turn, so the reply can report them and
 the evaluation suites can assert on them.
 
-It is a `CallAdvisor` ordered at `HIGHEST_PRECEDENCE + 400` — immediately after Spring AI's `ToolCallingAdvisor`
-(`+ 300`) — so it observes the response once tool calls have been resolved.
+It implements both `CallAdvisor` and `StreamAdvisor`, ordered at `HIGHEST_PRECEDENCE + 400` — immediately after
+Spring AI's `ToolCallingAdvisor` (`+ 300`) — so it observes the response once tool calls have been resolved. An
+advisor that implements only the call side is silently skipped when streaming, which would make tool auditing
+disappear without any error.
 
 The executed calls are appended to a mutable list that the caller places in the advisor context under
-`TOOL_CALLS_CONTEXT_KEY`; `ChatClientAgent` seeds it on every request. If the key is missing or unusable the update
-is skipped and logged rather than failing the call — auditing must never break a conversation.
+`TOOL_CALLS_CONTEXT_KEY`; `ChatClientAgent` seeds it on every request with a **synchronized** list, because under
+streaming the advisor appends from Reactor threads. If the key is missing or unusable the update is skipped and
+logged rather than failing the call — auditing must never break a conversation.
 
 > The seeding requirement is a leaky contract: it works only because every agent goes through `ChatClientAgent`.
 > See `open-tasks.md`.

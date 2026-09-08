@@ -20,6 +20,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OrderPromptProviderTest {
 
+    private static final String USER_ID = "anon:sess-abc";
+
     @Mock
     private UserMemoryService userMemoryService;
 
@@ -34,7 +36,7 @@ class OrderPromptProviderTest {
     void buildPrompt_whenCorrectParams_keepsStaticTemplateContent() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = orderPromptProvider.buildPrompt("some user message");
+        Prompt prompt = orderPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .startsWith("You are the Order Agent for")
@@ -59,7 +61,7 @@ class OrderPromptProviderTest {
     void buildPrompt_whenCorrectParams_populatesTemplateVariables() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = orderPromptProvider.buildPrompt("some user message");
+        Prompt prompt = orderPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .contains("You are the Order Agent for Awesome Store")
@@ -76,7 +78,7 @@ class OrderPromptProviderTest {
     void buildPrompt_whenUserMessage_addsIt() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = orderPromptProvider.buildPrompt("do you have red shoes?");
+        Prompt prompt = orderPromptProvider.buildPrompt("do you have red shoes?", USER_ID);
 
         assertThat(prompt.getUserMessage().getText()).isEqualTo("do you have red shoes?");
         verifyNoMoreInteractions(userMemoryService);
@@ -86,7 +88,7 @@ class OrderPromptProviderTest {
     void buildPrompt_whenUserProfileExists_injectsUserContextMessage() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.of("currency=EUR, size=M"));
 
-        Prompt prompt = orderPromptProvider.buildPrompt("some message");
+        Prompt prompt = orderPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
@@ -99,7 +101,7 @@ class OrderPromptProviderTest {
     void buildPrompt_whenNoUserProfile_doesNotInjectUserContextMessage() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = orderPromptProvider.buildPrompt("some message");
+        Prompt prompt = orderPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)

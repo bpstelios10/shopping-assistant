@@ -1,9 +1,11 @@
 package org.learnings.ai.shoppingassistant.agents;
 
 import lombok.extern.slf4j.Slf4j;
-import org.learnings.ai.shoppingassistant.services.memory.CurrentUser;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -26,41 +28,71 @@ public class AgentOrchestrator {
     }
 
     public AgentChatResult chat(String message, String conversationId) {
-        conversationId = !StringUtils.hasText(conversationId) ? UUID.randomUUID().toString() : conversationId;
-        final String userId = resolveUserId();
-        final String convId = userId + ":" + conversationId;
-        log.debug("chat with conversation-id: [{}]", convId);
-        CurrentUser.set(userId);
+        String convId = conversationId(conversationId);
+        String userId = resolveUserId();
 
-        try {
-            RouterAgent.RoutingPlan plan = routerAgent.route(message);
-            log.debug("route plan: [{}]", plan);
+        RouterAgent.RoutingStep decision = route(message);
 
-            // task: handle the multiple decisions
-            List<RouterAgent.RoutingStep> decisions = plan.decisions();
-            // if null decision -> fallback to default-fallback agent (0 confidence) with the whole user message as task
-            RouterAgent.RoutingStep decision = decisions.isEmpty() ?
-                    new RouterAgent.RoutingStep(null, message, 0d) :
-                    decisions.getFirst();
-
-            return getAgent(decision.agent(), decision.confidence())
-                    .chat(decision.task(), convId);
-        } finally {
-            CurrentUser.clear();
-        }
+        return getAgent(decision).chat(new AgentRequest(decision.task(), convId, userId));
     }
 
-    private Agent getAgent(RouterAgent.RoutingStep.AgentType agent, double confidence) {
+    /**
+     * Streaming counterpart of {@link #chat(String, String)}.
+     *
+     * <p>Routing is a full blocking inference, so it is pushed onto {@link Schedulers#boundedElastic()} rather than
+     * run on the servlet thread: with streaming the caller expects the response to be committed immediately, and
+     * blocking here would hold a container thread for the whole routing round-trip.
+     *
+     * <p>The routing decision is published as the first event so a client can render "asking the orders agent…"
+     * before any token arrives.
+     */
+    public Flux<AgentStreamEvent> chatStream(String message, String conversationId) {
+        String convId = conversationId(conversationId);
+        String userId = resolveUserId();
+
+        return Mono.fromCallable(() -> route(message))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(decision -> {
+                    Agent agent = getAgent(decision);
+
+                    return Flux.<AgentStreamEvent>just(
+                                    new AgentStreamEvent.Routed(agent.name(), convId, decision.confidence()))
+                            .concatWith(agent.chatStream(new AgentRequest(decision.task(), convId, userId)));
+                });
+    }
+
+    private RouterAgent.RoutingStep route(String message) {
+        RouterAgent.RoutingPlan plan = routerAgent.route(message);
+        log.debug("route plan: [{}]", plan);
+
+        // task: handle the multiple decisions
+        List<RouterAgent.RoutingStep> decisions = plan.decisions();
+
+        // if no decision -> fallback agent (0 confidence) with the whole user message as task
+        return decisions.isEmpty()
+                ? new RouterAgent.RoutingStep(null, message, 0d)
+                : decisions.getFirst();
+    }
+
+    private String conversationId(String conversationId) {
+        String id = !StringUtils.hasText(conversationId) ? UUID.randomUUID().toString() : conversationId;
+        String convId = resolveUserId() + ":" + id;
+        log.debug("chat with conversation-id: [{}]", convId);
+
+        return convId;
+    }
+
+    private Agent getAgent(RouterAgent.RoutingStep decision) {
         Agent fallbackAgent = agentsByName.get("shopping");
         if (fallbackAgent == null) {
             throw new IllegalStateException("No fallback 'shopping' agent configured");
         }
 
-        if (confidence < ROUTING_THRESHOLD) {
+        if (decision.confidence() < ROUTING_THRESHOLD) {
             return fallbackAgent;
         }
 
-        return agentsByName.getOrDefault(agent.name().toLowerCase(), fallbackAgent);
+        return agentsByName.getOrDefault(decision.agent().name().toLowerCase(), fallbackAgent);
     }
 
     private String resolveUserId() {

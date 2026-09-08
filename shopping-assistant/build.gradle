@@ -59,6 +59,7 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
 
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+    testImplementation 'io.projectreactor:reactor-test'
 }
 
 test {

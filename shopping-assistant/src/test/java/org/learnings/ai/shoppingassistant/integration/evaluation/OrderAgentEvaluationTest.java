@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.Agent;
+import org.learnings.ai.shoppingassistant.agents.AgentRequest;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
@@ -81,7 +82,7 @@ class OrderAgentEvaluationTest {
                         """.formatted(orderId), MediaType.APPLICATION_JSON));
         conversationId = "evaluation-" + testCase.id();
 
-        AgentChatResult agentChatResult = orderAgent.chat(testCase.question(), conversationId);
+        AgentChatResult agentChatResult = orderAgent.chat(new AgentRequest(testCase.question(), conversationId, "anon:eval-user"));
 
         assertThat(agentChatResult).isNotNull();
         log.debug("AgentChatResult: {}.", agentChatResult);

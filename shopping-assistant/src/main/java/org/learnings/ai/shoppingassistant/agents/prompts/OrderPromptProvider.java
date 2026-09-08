@@ -23,7 +23,7 @@ public class OrderPromptProvider extends AbstractPromptProvider implements Promp
     }
 
     @Override
-    public Prompt buildPrompt(String userMessage) {
+    public Prompt buildPrompt(String userMessage, String userId) {
         String systemText = orderAssistantTemplate.render(
                 Map.of(
                         "storeName", "Awesome Store",
@@ -43,7 +43,7 @@ public class OrderPromptProvider extends AbstractPromptProvider implements Promp
                 .withChatOptions(orderChatOptions)
                 .withSystemMessage(systemText);
 
-        getUserPreferences().ifPresent(promptDecorator::withSystemMessage);
+        getUserPreferences(userId).ifPresent(promptDecorator::withSystemMessage);
 
         return promptDecorator
                 .withUserMessage(userMessage)

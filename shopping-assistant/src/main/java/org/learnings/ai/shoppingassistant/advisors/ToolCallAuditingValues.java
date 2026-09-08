@@ -1,7 +1,6 @@
 package org.learnings.ai.shoppingassistant.advisors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.ai.chat.messages.AssistantMessage;
 
 import java.util.ArrayList;
@@ -13,7 +12,8 @@ public final class ToolCallAuditingValues {
 
     public static final String TOOL_CALLS_CONTEXT_KEY = "toolCalls";
 
-    private ToolCallAuditingValues() { }
+    private ToolCallAuditingValues() {
+    }
 
     public static List<AssistantMessage.ToolCall> getToolCalls(Map<String, Object> context) {
         Object value = context.get(TOOL_CALLS_CONTEXT_KEY);

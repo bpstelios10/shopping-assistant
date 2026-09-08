@@ -79,3 +79,10 @@ clients:
       base-url: ${ORDERS_SERVICE_URL:http://localhost:8083}
       connect-timeout: ${ORDERS_CONNECT_TIMEOUT:2s}
       read-timeout: ${ORDERS_READ_TIMEOUT:5s}
+
+shopping-assistant:
+  chat:
+    # a stalled inference must not hold an SSE connection open forever
+    stream-timeout: ${CHAT_STREAM_TIMEOUT:120s}
+  tools:
+    max-iterations: ${TOOLS_MAX_ITERATIONS:5}

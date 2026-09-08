@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.learnings.ai.shoppingassistant.agents.Agent;
+import org.learnings.ai.shoppingassistant.agents.AgentRequest;
 import org.learnings.ai.shoppingassistant.agents.AgentChatResult;
 import org.learnings.ai.shoppingassistant.integration.evaluation.cases.EvaluationCase;
 import org.learnings.ai.shoppingassistant.integration.evaluation.config.EvaluationConfig;
@@ -64,7 +65,7 @@ class SupportAgentEvaluationTest {
     @MethodSource("loadCases")
     void supportAgent_whenAskedAboutRefundsOrShippingOrFaq_shouldPassTheEvaluation(EvaluationCase testCase) {
         conversationId = "evaluation-" + testCase.id();
-        AgentChatResult result = supportAgent.chat(testCase.question(), conversationId);
+        AgentChatResult result = supportAgent.chat(new AgentRequest(testCase.question(), conversationId, "anon:eval-user"));
         ChatResponse chatResponse = result.chatResponse();
 
         assertThat(chatResponse.getResult()).isNotNull();

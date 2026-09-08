@@ -7,10 +7,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
+import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.core.Ordered;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +31,8 @@ class ToolCallAuditingAdvisorTest {
 
     @Mock
     private CallAdvisorChain chain;
+    @Mock
+    private StreamAdvisorChain streamChain;
     @Mock
     private ChatClientRequest request;
     @Mock
@@ -111,5 +116,54 @@ class ToolCallAuditingAdvisorTest {
         assertThat(contextToolCalls).hasSize(3);
         assertThat(contextToolCalls).contains(toolCall1, toolCall2);
         verifyNoMoreInteractions(chain, response, generation, assistantMessage);
+    }
+
+    @Test
+    void adviseStream_whenToolCallsExist_addsThemForEveryChunk() {
+        AssistantMessage.ToolCall toolCall = mock(AssistantMessage.ToolCall.class);
+        Generation generation = mock(Generation.class);
+        AssistantMessage assistantMessage = mock(AssistantMessage.class);
+        ChatResponse chatResponse = mock(ChatResponse.class);
+        when(chatResponse.getResult()).thenReturn(generation);
+        when(chatResponse.hasToolCalls()).thenReturn(true);
+        when(generation.getOutput()).thenReturn(assistantMessage);
+        when(assistantMessage.getToolCalls()).thenReturn(List.of(toolCall));
+
+        List<AssistantMessage.ToolCall> contextToolCalls = new ArrayList<>();
+        Map<String, Object> context = new HashMap<>();
+        context.put(TOOL_CALLS_CONTEXT_KEY, contextToolCalls);
+        when(response.chatResponse()).thenReturn(chatResponse);
+        when(response.context()).thenReturn(context);
+        when(streamChain.nextStream(request)).thenReturn(Flux.just(response, response));
+
+        StepVerifier.create(advisor.adviseStream(request, streamChain))
+                .expectNext(response)
+                .expectNext(response)
+                .verifyComplete();
+
+        assertThat(contextToolCalls).containsExactly(toolCall, toolCall);
+    }
+
+    @Test
+    void adviseStream_whenNoToolCalls_passesChunksThroughUntouched() {
+        ChatResponse chatResponse = mock(ChatResponse.class);
+        when(chatResponse.getResult()).thenReturn(mock(Generation.class));
+        when(chatResponse.hasToolCalls()).thenReturn(false);
+        when(response.chatResponse()).thenReturn(chatResponse);
+        when(streamChain.nextStream(request)).thenReturn(Flux.just(response));
+
+        StepVerifier.create(advisor.adviseStream(request, streamChain))
+                .expectNext(response)
+                .verifyComplete();
+
+        verifyNoMoreInteractions(streamChain, response);
+    }
+
+    @Test
+    void adviseStream_propagatesErrors() {
+        when(streamChain.nextStream(request)).thenReturn(Flux.error(new IllegalStateException("boom")));
+
+        StepVerifier.create(advisor.adviseStream(request, streamChain))
+                .verifyErrorMessage("boom");
     }
 }

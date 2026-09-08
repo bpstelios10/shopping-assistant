@@ -14,11 +14,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SupportPromptProviderTest {
+
+    private static final String USER_ID = "anon:sess-abc";
 
     @Mock
     private UserMemoryService userMemoryService;
@@ -34,7 +37,7 @@ class SupportPromptProviderTest {
     void buildPrompt_whenCorrectParams_keepsStaticTemplateContent() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = supportPromptProvider.buildPrompt("some user message");
+        Prompt prompt = supportPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .startsWith("You are a helpful customer support assistant for")
@@ -55,7 +58,7 @@ class SupportPromptProviderTest {
     void buildPrompt_whenCorrectParams_populatesTemplateVariables() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = supportPromptProvider.buildPrompt("some user message");
+        Prompt prompt = supportPromptProvider.buildPrompt("some user message", USER_ID);
 
         assertThat(prompt.getSystemMessage().getText())
                 .startsWith("You are a helpful customer support assistant for Awesome Store.")
@@ -71,7 +74,7 @@ class SupportPromptProviderTest {
     void buildPrompt_whenUserMessage_addsIt() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = supportPromptProvider.buildPrompt("do you have red shoes?");
+        Prompt prompt = supportPromptProvider.buildPrompt("do you have red shoes?", USER_ID);
 
         assertThat(prompt.getUserMessage().getText()).isEqualTo("do you have red shoes?");
         verifyNoMoreInteractions(userMemoryService);
@@ -81,7 +84,7 @@ class SupportPromptProviderTest {
     void buildPrompt_whenUserProfileExists_injectsUserContextMessage() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.of("currency=EUR, size=M"));
 
-        Prompt prompt = supportPromptProvider.buildPrompt("some message");
+        Prompt prompt = supportPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
@@ -94,12 +97,34 @@ class SupportPromptProviderTest {
     void buildPrompt_whenNoUserProfile_doesNotInjectUserContextMessage() {
         when(userMemoryService.getProfileSummary(any())).thenReturn(Optional.empty());
 
-        Prompt prompt = supportPromptProvider.buildPrompt("some message");
+        Prompt prompt = supportPromptProvider.buildPrompt("some message", USER_ID);
 
         String allSystemText = prompt.getInstructions().stream()
                 .map(Content::getText)
                 .collect(java.util.stream.Collectors.joining("\n"));
         assertThat(allSystemText).doesNotContain("Known information about the user");
         verifyNoMoreInteractions(userMemoryService);
+    }
+
+    @Test
+    void buildPrompt_whenUserIdIsNull_skipsUserMemoryLookup() {
+        Prompt prompt = supportPromptProvider.buildPrompt("some message", null);
+
+        assertThat(systemText(prompt)).doesNotContain("Known information about the user");
+        verifyNoInteractions(userMemoryService);
+    }
+
+    @Test
+    void buildPrompt_whenUserIdIsBlank_skipsUserMemoryLookup() {
+        Prompt prompt = supportPromptProvider.buildPrompt("some message", "   ");
+
+        assertThat(systemText(prompt)).doesNotContain("Known information about the user");
+        verifyNoInteractions(userMemoryService);
+    }
+
+    private String systemText(Prompt prompt) {
+        return prompt.getInstructions().stream()
+                .map(Content::getText)
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 }

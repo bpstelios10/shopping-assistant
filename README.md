@@ -21,7 +21,7 @@ role-specialized agent that owns its own prompt, tools and knowledge sources.
 | 🤖 **Model-Agnostic Design** | ✅ Active | OpenAI-compatible API (Ollama, vLLM, ...) |
 | 🧪 **AI Evaluation Tests** | ✅ Active | Prompt/model regression suites per agent |
 | 📄 **Structured Output** | 🚧 Partial | Typed API DTOs; stricter model-level contracts next |
-| ⚡ **Streaming** | 📋 Planned | Chat API is currently request/response |
+| ⚡ **Streaming** | ✅ Active | `POST /chat/stream` — typed SSE events (routing, tokens, tool calls, usage) |
 
 ## Architecture
 
@@ -64,6 +64,7 @@ Details: [architecture](docs/architecture.md).
 
 - [Architecture design](docs/architecture.md)
 - [Tools design](docs/tools.md)
+- [Streaming design](docs/streaming.md)
 - [Memory design](docs/memory.md)
 - [RAG ingestion flow](docs/RAG.md)
 - [Prompts flow](docs/prompts.md)

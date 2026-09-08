@@ -27,7 +27,7 @@ public class ShoppingPromptProvider extends AbstractPromptProvider implements Pr
     }
 
     @Override
-    public Prompt buildPrompt(String userMessage) {
+    public Prompt buildPrompt(String userMessage, String userId) {
         String systemText = shoppingAssistantTemplate.render(
                 Map.of(
                         "storeName", "Awesome Store",
@@ -48,7 +48,7 @@ public class ShoppingPromptProvider extends AbstractPromptProvider implements Pr
                 .withChatOptions(shoppingChatOptions)
                 .withSystemMessage(systemText);
 
-        getUserPreferences().ifPresent(promptDecorator::withSystemMessage);
+        getUserPreferences(userId).ifPresent(promptDecorator::withSystemMessage);
 
         return promptDecorator
                 .withUserMessage(userMessage)
