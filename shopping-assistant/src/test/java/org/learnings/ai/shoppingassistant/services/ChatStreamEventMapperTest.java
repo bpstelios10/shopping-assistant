@@ -63,4 +63,3 @@ class ChatStreamEventMapperTest {
         assertThat(dto.event()).isEqualTo(ChatStreamEventDto.ERROR);
     }
 }
-

@@ -1,6 +1,5 @@
 package org.learnings.ai.shoppingassistant.web.controllers;
 
-
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;

@@ -15,19 +15,27 @@ import org.springframework.ai.chat.messages.AssistantMessage;
  */
 public sealed interface AgentStreamEvent {
 
-    /** The routing decision, emitted before the first token so a client can render the agent immediately. */
+    /**
+     * The routing decision, emitted before the first token so a client can render the agent immediately.
+     */
     record Routed(String agent, String conversationId, double confidence) implements AgentStreamEvent {
     }
 
-    /** An incremental chunk of assistant text. */
+    /**
+     * An incremental chunk of assistant text.
+     */
     record Delta(String text) implements AgentStreamEvent {
     }
 
-    /** A tool the model decided to execute during this turn. */
+    /**
+     * A tool the model decided to execute during this turn.
+     */
     record ToolInvoked(AssistantMessage.ToolCall toolCall) implements AgentStreamEvent {
     }
 
-    /** Terminal success event carrying the metadata that is only known once the stream is exhausted. */
+    /**
+     * Terminal success event carrying the metadata that is only known once the stream is exhausted.
+     */
     record Completed(String model, Integer promptTokens, Integer completionTokens) implements AgentStreamEvent {
     }
 
@@ -38,4 +46,3 @@ public sealed interface AgentStreamEvent {
     record Failed(String message) implements AgentStreamEvent {
     }
 }
-

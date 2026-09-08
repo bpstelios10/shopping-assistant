@@ -37,7 +37,7 @@ class BoundedToolCallingManagerTest {
 
     @BeforeEach
     void setup() {
-         manager = new BoundedToolCallingManager(delegate, MAX_ITERATIONS);
+        manager = new BoundedToolCallingManager(delegate, MAX_ITERATIONS);
     }
 
     @Test

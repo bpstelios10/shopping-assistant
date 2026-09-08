@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingValues.TOOL_CALLS_CONTEXT_KEY;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 class ToolCallAuditingValuesTest {
 

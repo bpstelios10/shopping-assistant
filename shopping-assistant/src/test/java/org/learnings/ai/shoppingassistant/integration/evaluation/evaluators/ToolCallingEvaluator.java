@@ -47,12 +47,12 @@ public class ToolCallingEvaluator implements Evaluator {
                 .map(tc -> new EvaluationTool(tc.name(), tc.arguments()))
                 .collect(Collectors.toList());
 
-        for (EvaluationTool tool: expectedTools) {
+        for (EvaluationTool tool : expectedTools) {
             if (!actualToolCalls.contains(tool)) {
                 return getFailingEvaluationResponse(String.format("""
-                    
-                    Tool call not found: %s
-                    Actual tools: %s""", tool, chatReplyDto.toolsCalled()));
+                        
+                        Tool call not found: %s
+                        Actual tools: %s""", tool, chatReplyDto.toolsCalled()));
             }
 
             actualToolCalls.remove(tool);
