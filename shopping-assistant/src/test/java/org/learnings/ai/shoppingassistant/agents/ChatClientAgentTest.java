@@ -189,6 +189,7 @@ class ChatClientAgentTest {
         streamSpecReturning(Flux.just(
                 new ChatClientResponse(null, Map.of()),
                 new ChatClientResponse(new ChatResponse(List.of()), Map.of()),
+                chunk(null, null),
                 chunk("", null),
                 chunk("hi", null)));
 

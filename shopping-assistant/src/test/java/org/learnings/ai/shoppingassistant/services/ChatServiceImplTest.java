@@ -114,4 +114,21 @@ class ChatServiceImplTest {
         stream.blockLast();
         assertThat(subscribed).isTrue();
     }
+
+    @Test
+    void chatStream_whenClientDisconnects_cancelsUpstream() {
+        AtomicBoolean upstreamCancelled = new AtomicBoolean();
+        when(orchestrator.chatStream("hi", "conv-1")).thenReturn(
+                Flux.concat(
+                                Flux.<AgentStreamEvent>just(new AgentStreamEvent.Delta("hi")),
+                                Flux.never())
+                        .doOnCancel(() -> upstreamCancelled.set(true)));
+
+        StepVerifier.create(chatService.chatStream("hi", "conv-1"))
+                .expectNext(new ChatStreamEventDto.Delta("hi"))
+                .thenCancel()
+                .verify();
+
+        assertThat(upstreamCancelled).isTrue();
+    }
 }
