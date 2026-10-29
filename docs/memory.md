@@ -37,8 +37,8 @@ Implemented by `SummaryBufferChatMemory`
 
 - The memory key is a composite: `{userId}:{conversationId}`.
 - `userId` is resolved per request in `AgentOrchestrator` (currently `anon:sess-abc`; to be
-  replaced by real auth later). This isolates each user's chats without changing the
-  `ChatMemoryRepository` contract.
+  replaced by real auth later). Once auth lands this isolates each user's chats without changing the
+  `ChatMemoryRepository` contract — until then, all callers share one user id and one profile.
 
 ## User profile memory
 
@@ -52,8 +52,8 @@ Durable, cross-conversation preferences (currency, size, brand, language, shippi
   (via `PromptDecorator`) when a profile exists.
 - **Write:** captured via the `saveUserPreference` tool (`UserPreferenceTool`), which the
   model calls only when the shopper states a lasting preference. The per-request `userId`
-  reaches the singleton tool via the `CurrentUser` ThreadLocal (set/cleared in
-  `AgentOrchestrator`).
+  reaches the singleton tool via Spring AI's `ToolContext` (`ToolContextValues`), populated by
+  `ChatClientAgent`. The write is an atomic Postgres `jsonb` merge (`profile || EXCLUDED.profile`).
 
 ### Why a tool (not per-message extraction)
 - One inference — the tool call is part of the existing chat call, no extra LLM round-trip.

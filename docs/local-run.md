@@ -8,6 +8,7 @@ Runtime requirements:
 - Docker + Docker Compose
 
 The app requires **PostgreSQL with pgvector** and **Redis Stack** running before startup.
+Shopping and order flows also need the external Products (`:8082`) and Orders (`:8083`) services.
 
 Flyway migrations run automatically on startup against the configured datasource
 (`spring.datasource.*`), including the `user_memory` table migration.
@@ -52,6 +53,7 @@ brew services stop ollama
 ollama serve &
 ollama pull qwen3:8b
 ollama pull nomic-embed-text
+ollama pull qwen2.5:3b-instruct   # optional, not used by the app yet
 pkill ollama
 
 # 3. Start Ollama before the app
@@ -72,7 +74,8 @@ App services connect to Ollama through the OpenAI-compatible API (`/v1`):
 | Platform | `OLLAMA_BASE_URL` |
 |---|---|
 | Mac (native) | `http://localhost:11434/v1` (default) |
-| Linux/Windows (Docker) | `http://ollama:11434/v1` |
+| Linux/Windows (Ollama in Docker, app on host) | `http://localhost:11434/v1` (default, port is published) |
+| App in the same Docker network as Ollama | `http://ollama:11434/v1` |
 | Mac (Docker app -> host Ollama) | `http://host.docker.internal:11434/v1` |
 
 ## Verify

@@ -49,8 +49,9 @@ instead of being held for the routing round-trip.
 **The flux is cold.** Nothing reaches the model until subscription, and a shopper closing the tab cancels the
 subscription, which propagates upstream and abandons the inference.
 
-**There is a stream timeout** (`shopping-assistant.chat.stream-timeout`, default 60s). A stalled inference would
-otherwise hold the connection — and its async context — open indefinitely.
+**There is a stream idle timeout** (`shopping-assistant.chat.stream-timeout`, `120s` in `application.yml`; `60s` code
+fallback). It is applied with `Flux.timeout`, so it bounds the gap *between* events, not the total turn duration. A
+stalled inference would otherwise hold the connection — and its async context — open indefinitely.
 
 ## What streaming forced to change
 
@@ -70,6 +71,6 @@ Streaming is not additive; it breaks anything that assumed one request equals on
 
 `SummaryBufferChatMemory.add()` still calls the model synchronously when it compacts. On the blocking path that is a
 p99 latency cliff; on the streaming path it also **blocks a Reactor thread**, because the memory advisor aggregates
-and persists on the thread that emits completion. Moving summarization off the request path is the top item in
+and persists on the thread that emits completion. Moving summarization off the request path is tracked in
 `open-tasks.md` and matters more now than it did before.
 

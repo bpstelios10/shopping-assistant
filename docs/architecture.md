@@ -48,6 +48,7 @@ Help users discover and choose products.
 **Uses**
 
 * Products Tool
+* User Preference Tool
 
 ---
 
@@ -60,13 +61,14 @@ Manage customer orders.
 **Owns**
 
 * Place order
-* Cancel order
 * Order status
-* Order history
+* Cancel order *(no tool yet)*
+* Order history *(no tool yet)*
 
 **Uses**
 
 * Orders Tool
+* User Preference Tool
 
 ---
 

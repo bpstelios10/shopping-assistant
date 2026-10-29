@@ -113,6 +113,7 @@ curl http://localhost:8081/shopping-assistant/private/health
 | `5432` | Postgres + pgvector |
 | `6379` | Redis Stack |
 | `11434` | Ollama |
+| `8082` / `8083` | Products / Orders services (external, must be running for shopping/order flows) |
 
 Full instructions: [local run guide](docs/local-run.md).
 
@@ -120,8 +121,11 @@ Full instructions: [local run guide](docs/local-run.md).
 
 ```shell
 cd shopping-assistant
-./gradlew test              # unit + component tests (integration excluded)
+./gradlew check             # unit + component tests (integration excluded only under build/check)
 ./gradlew integrationTest   # integration + AI evaluation tests (needs dependencies running)
 ```
+
+> `./gradlew test` on its own also runs the `integration`-tagged tests — the exclusion in `build.gradle` applies only
+> when `build` or `check` is in the task graph.
 
 Postman collection: [`postman/Shopping-Assistant.postman_collection.json`](postman/Shopping-Assistant.postman_collection.json)

@@ -13,7 +13,10 @@
 - Current strategy is simple: wipe `vector_store`, then re-import all files from the provided folder.
 - Reader: `TikaDocumentReader`.
 - Chunking: `TokenTextSplitter` (chunk size 500).
-- Metadata added per chunk: `filename`.
+- Metadata per chunk: no custom metadata is added by `DocumentImporter`; only what `TikaDocumentReader` sets
+  (the resource source name).
+- Validates the folder (exists, has files) *before* wiping. The wipe + import is not transactional — a failure
+  mid-import leaves a partial knowledge base.
 
 ## Run the loader
 

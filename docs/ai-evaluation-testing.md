@@ -4,6 +4,19 @@ The evaluation tests are used to **test the decisions made by the LLMs and evalu
 
 Each agent has **one parameterized JUnit test**, with the evaluation cases defined in JSON files under `src/test/resources/evaluation/`. The test loads all cases, invokes the agent, evaluates the result, logs the evaluation, and asserts that it passes.
 
+All evaluation tests are tagged `integration` and run with `./gradlew integrationTest` (they need Ollama, Postgres and Redis).
+
+## ShoppingAgent / OrderAgent
+
+These agents are tool-driven, so their evaluation asserts on the **tool calls** the model made, not on the text.
+A custom `ToolCallingEvaluator` compares the expected tools (and arguments) from `shopping-cases.json` /
+`order-cases.json` with the calls captured by `ToolCallAuditingAdvisor`. Downstream services are mocked.
+
+## Streaming
+
+`AgentOrchestratorStreamEvaluationTest` and `SupportAgentStreamEvaluationTest` run real turns over the streaming path
+and assert on the event contract (e.g. `routed` first, exactly one terminal `done`/`error`, chunk order).
+
 ## SupportAgent
 
 The `SupportAgent` uses RAG, so its evaluation focuses on the generated answer:
@@ -41,6 +54,7 @@ Different parts of the system use different evaluation strategies:
 
 * **RAG answer quality:** LLM-based evaluation (`RelevancyEvaluator`, `FactCheckingEvaluator`)
 * **Router decisions:** deterministic custom `RoutingEvaluator`
+* **Tool selection:** deterministic custom `ToolCallingEvaluator`
 * **Prompt/model regression:** run the same parameterized evaluation suite and compare the results
 
 The goal is to evaluate the **behavior and decisions of the LLMs**, rather than simply testing that the Java code executes successfully.

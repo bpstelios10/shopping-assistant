@@ -8,9 +8,11 @@ arguments*, the application decides what it is *allowed* to get back.
 | Tool                                                                  | Agents           | Backing service      |
 |-----------------------------------------------------------------------|------------------|----------------------|
 | `ProductTool` — `listAllProducts`, `getProductById`, `searchProducts` | shopping         | Products service     |
-| `CategoryTool` — `listCategories`                                     | shopping         | Products service     |
-| `OrderTool`                                                           | orders           | Orders service       |
+| `OrderTool` — `getOrderById`, `createOrder`                           | orders           | Orders service       |
 | `UserPreferenceTool` — `saveUserPreference`                           | shopping, orders | Postgres user memory |
+
+There is no categories tool: the category list is rendered into the shopping system prompt (`{categories}`).
+Cancel order and order history have no tools yet.
 
 Tools are wired by marker interfaces (`ShoppingAgentTool`, `OrderAgentTool`), so an agent receives exactly the tools
 it is allowed to use and adding a tool to an agent is a matter of implementing the right interface.
@@ -28,7 +30,7 @@ the failure and stay on the current turn.
 (`shopping-assistant.tools.max-iterations`, default 5).
 
 Spring AI's tool loop ends only when the model stops asking for tools, so an oscillating model (typically
-`searchProducts` → empty → `listCategories` → `searchProducts` → ...) has no upper bound on cost or latency, and
+`searchProducts` → empty → `listAllProducts` → `searchProducts` → ...) has no upper bound on cost or latency, and
 each round is more expensive than the last as the history grows.
 
 The iteration count is read from the prompt — one `ToolResponseMessage` per completed round — so the decorator holds
@@ -80,8 +82,8 @@ logged rather than failing the call — auditing must never break a conversation
 
 - **Enforce limits in code, not in the prompt.** A prompt limit is a request the model may ignore; anything
   protecting context, cost or latency belongs on the boundary.
-- **Push constraints down to the service.** `RestProductClient` sends `limit` to the Products service so the payload
-  is bounded before it is transferred, not after.
+- **Push constraints down to the service.** Bounds (e.g. a result `limit`) should be sent to the Products service so
+  the payload is bounded before it is transferred, not after. Not implemented yet — see `open-tasks.md`.
 - **Tool descriptions are for the model, not for enforcement.** They should describe behavior (including limits) so
   the model reasons correctly about the result.
 - Several descriptions currently contain anti-repetition instructions (e.g. *"Do not call this tool again for the

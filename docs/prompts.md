@@ -15,17 +15,23 @@ Each agent has a `PromptProvider` (e.g. `ShoppingPromptProvider`, `SupportPrompt
 that builds its `Prompt` via `PromptDecorator`:
 
 ```
-system template  → user preferences (if any)  → user message
+system template  → user preferences (if any)  → user message  → latest-turn guard (system)
 ```
+
+The memory advisor then inserts the conversation history (summary + recent window) before the prompt messages,
+and for the support agent the RAG advisor augments the user message with retrieved context.
 
 - `AbstractPromptProvider.getUserPreferences()` adds a `Known information about the user: ...`
   `SystemMessage` when a user profile exists (empty → skipped).
-- Template vars (`{today}`, `{language}`, `{storeName}`, `{categories}`) are rendered per request.
+- `PromptDecorator.build()` appends `LATEST_TURN_GUARD` as a trailing `SystemMessage` — a workaround for the local
+  model's weak instruction-following.
+- Template vars (`{today}`, `{language}`, `{storeName}`) are rendered per request; `{categories}` only for shopping.
+  `storeName` and `language` are currently hardcoded in the providers.
 
 ## Router prompt
 
 `RouterAgent` uses an inline system prompt (not a `.st` file) to classify the request into
-`SHOPPING` / `SUPPORT` with a confidence score.
+`SHOPPING` / `ORDERS` / `SUPPORT` steps, each with a task and a confidence score.
 
 ## Conventions
 

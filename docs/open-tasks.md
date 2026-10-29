@@ -40,8 +40,9 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 
 - [x] **Replace `CurrentUser` ThreadLocal with Spring AI `ToolContext`** — thread-safe, explicit, removes static
   setup/teardown from tests. Done as part of streaming: a ThreadLocal cannot survive the Reactor thread hops.
-- [ ] **Timeout + circuit breaker on the model call.** Downstream REST clients have both; the LLM (slowest, most
-  failure-prone dependency) has neither. With `tomcat.threads.max=500`, a hung inference endpoint exhausts the pool.
+- [ ] **Timeout + circuit breaker on the model call.** Downstream REST clients have timeouts (no circuit breaker yet);
+  the LLM (slowest, most failure-prone dependency) has neither. With `tomcat.threads.max=500`, a hung inference
+  endpoint exhausts the pool.
 - [x] **Cap tool-call iterations per turn.** Nothing bounds tool ping-pong today — the "do not call this tool again"
   text in tool descriptions is a prompt-level workaround for a missing runtime guard.
 - [ ] **Cheap router short-circuit.** Greetings and obvious keyword matches shouldn't cost an inference; cache routing
@@ -52,8 +53,10 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
 ## Code quality
 
 - [x] **Extract `AbstractAgent`.** The three agents differ only in name, prompt provider and tools; everything else is
-  copy-paste, including the audit-list seeding that callers must remember to do. Replace
-  `RuntimeException("Agent didnt reply")` with a domain exception mapped in `ControllerExceptionHandler`.
+  copy-paste, including the audit-list seeding that callers must remember to do. Done via composition
+  (`ChatClientAgent` + `AgentsConfig`).
+- [ ] **Domain exception for "no reply".** `ChatClientAgent.chat` still throws a raw `RuntimeException`; replace with a
+  domain exception mapped in `ControllerExceptionHandler` (e.g. 503).
 - [ ] **Don't silently broaden searches.** `ProductTool.searchProducts` drops the query when a category search is empty,
   and the model presents the results as exact matches. Return a flag instead.
 - [ ] **AI metrics.** Routing fallback rate, confidence histogram, agent distribution, tool error rate, tool-loop depth,
@@ -68,6 +71,46 @@ Separate from `roadmap.md`, which tracks feature-level milestones (streaming, gu
   `@ConfigurationProperties` — also enables parameter sweeps in the eval harness.
 - [ ] **Move `extraBody(think=false)` to config** — Ollama-specific option hardcoded in a model-agnostic design.
 - [x] Replace `org.apache.logging.log4j.util.Strings` with `String.isBlank()` / `String.join()`.
+
+## Security & trust (from the Oct 2026 review — see `code-review.md`)
+
+- [ ] **Order ownership.** `getOrderById` returns any order by UUID; `createOrder` attaches no user. Pass `userId` via
+  `ToolContext` and enforce ownership.
+- [ ] **Code-enforced confirmation + idempotency for `createOrder`.** Propose → confirm token, idempotency key, validate
+  `quantity > 0` and an upper bound.
+- [ ] **Preference/summary injection.** Allow-list preference keys, cap value length, and stop injecting user-derived
+  content (profile, running summary) as `SystemMessage`.
+- [ ] **Lock down management endpoints.** Drop `heapdump`/`env` exposure outside local.
+- [ ] **Input limits + rate limiting** on `/chat` and `/chat/stream` (`@Size` on `message`/`conversationId`).
+- [ ] **Don't leak internals to clients.** `reasoningContent` and tool arguments in `ChatReplyDto` should be debug-only.
+
+## Correctness (from the Oct 2026 review)
+
+- [ ] **Status handling in REST clients.** `exchange()` in `RestOrderClient` (both methods) and
+  `RestProductClient.getProductById` parses 4xx/5xx bodies as domain objects.
+- [ ] **Fix tool descriptions.** `searchProducts` references a non-existent `listCategories` tool; `getProductById`
+  param says "UUID of the order"; `createOrder` param mentions "customer and products".
+- [ ] **Advertised but missing order capabilities.** Order prompt + router offer cancel/history with no tools.
+- [ ] **Money as `float`.** Use `BigDecimal`/minor units + currency in `Product`.
+- [ ] **Unknown `OrderStatus` fails deserialization.** Add an `UNKNOWN` default; add SHIPPED/DELIVERED.
+- [ ] **Router robustness.** Fallback on parse failure; guard `agent == null`; give the router recent history so
+  follow-ups route correctly; keep the raw user message (not the rewritten task) in memory; don't silently drop steps
+  2..n.
+- [ ] **MDC/request-id lost on Reactor threads.** Enable Micrometer context-propagation so `X-Request-ID` reaches
+  downstream calls and logs on the streaming path.
+- [ ] **Concurrent `SummaryBufferChatMemory.add`** is read-modify-write on Redis — lost messages under concurrent turns.
+- [ ] **Categories fetch fails the whole shopping turn** when the Products service is down — degrade to no categories.
+- [ ] **Atomic RAG re-ingest** (versioned table / swap) instead of `DELETE` + insert.
+
+## Housekeeping
+
+- [ ] Remove dead code: `AgentTool`, `services/dtos/Message`, unused `AgentStreamEvent.Failed`, empty
+  `prompts/recommendations.st`; stale `// TODO missing tests` in `ToolContextValues`; wrong `OrderClient` javadoc.
+- [ ] `docker-compose.yml` `ollama-init`: missing `;` after the `nomic-embed-text` pull (folded `>` joins lines);
+  pin `redis-stack` image.
+- [ ] Apply `think=false` consistently (or via config) across agents; consider virtual threads instead of
+  `tomcat.threads.max=500`.
+- [ ] Move schema creation for pgvector/Redis index to migrations (`initialize-schema: true` today).
 
 ## Notes
 
