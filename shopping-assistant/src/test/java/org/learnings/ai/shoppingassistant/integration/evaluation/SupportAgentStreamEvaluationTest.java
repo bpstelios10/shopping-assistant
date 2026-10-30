@@ -40,9 +40,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @SpringBootTest
 @Import({EvaluationConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SupportAgentEvaluationTest {
+class SupportAgentStreamEvaluationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(SupportAgentEvaluationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(SupportAgentStreamEvaluationTest.class);
 
     @Autowired
     private Agent supportAgent;
