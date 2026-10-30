@@ -1,8 +1,6 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.model.session.jdbc.autoconfigure.JdbcSessionRepositoryAutoConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 

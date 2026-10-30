@@ -1,9 +1,9 @@
 package org.learnings.ai.shoppingassistant.componenttests;
 
+import org.assertj.core.groups.Tuple;
 import org.learnings.ai.shoppingassistant.config.InMemorySessionConfig;
 import org.learnings.ai.shoppingassistant.config.TestRestClientConfig;
 import org.learnings.ai.shoppingassistant.services.memory.UserMemoryRepository;
-import org.assertj.core.groups.Tuple;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.session.EventFilter;
