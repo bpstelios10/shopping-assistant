@@ -2,7 +2,6 @@ package org.learnings.ai.shoppingassistant.integration.evaluation;
 
 import org.hamcrest.Matchers;
 import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
@@ -19,7 +18,6 @@ import org.learnings.ai.shoppingassistant.services.ChatReplyMapper;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +39,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -65,11 +64,7 @@ class ShoppingAgentEvaluationTest {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private ChatMemory chatMemory;
-    @Autowired
     private MockRestServiceServer server;
-
-    private String conversationId;
 
     @BeforeEach
     void setup() {
@@ -79,11 +74,6 @@ class ShoppingAgentEvaluationTest {
                 .andRespond(withSuccess("""
                         ["MAGNET","POSTCARD","ACCESSORY","JEWELRY","CLOTHES"]
                         """, MediaType.APPLICATION_JSON));
-    }
-
-    @AfterEach
-    void tearDown() {
-        chatMemory.clear(conversationId);
     }
 
     @ParameterizedTest
@@ -96,7 +86,7 @@ class ShoppingAgentEvaluationTest {
                 .andExpect(method(GET))
                 .andRespond(productsSearchResponse());
 
-        conversationId = "evaluation-" + testCase.id();
+        String conversationId = "evaluation-" + testCase.id() + "-" + UUID.randomUUID();
         AgentChatResult agentChatResult = shoppingAgent.chat(new AgentRequest(testCase.question(), conversationId, "anon:eval-user"));
 
         assertThat(agentChatResult).isNotNull();

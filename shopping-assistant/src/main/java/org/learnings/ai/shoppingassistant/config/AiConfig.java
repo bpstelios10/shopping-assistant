@@ -5,24 +5,23 @@ import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.learnings.ai.shoppingassistant.advisors.ToolCallAuditingAdvisor;
-import org.learnings.ai.shoppingassistant.infrastructure.repositories.RedisChatMemoryRepositoryObservationDecorator;
-import org.learnings.ai.shoppingassistant.services.memory.SummaryBufferChatMemory;
 import org.learnings.ai.shoppingassistant.tools.BoundedToolCallingManager;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.client.observation.ChatClientObservationContext;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.memory.repository.redis.RedisChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryAutoConfiguration;
-import org.springframework.ai.model.chat.memory.redis.autoconfigure.RedisChatMemoryProperties;
 import org.springframework.ai.model.tool.DefaultToolCallingManager;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.session.SessionService;
+import org.springframework.ai.session.advisor.SessionAdvisors;
+import org.springframework.ai.session.compaction.ChatModelSummarizer;
+import org.springframework.ai.session.compaction.CompactionWindow;
+import org.springframework.ai.session.compaction.TurnCountTrigger;
+import org.springframework.ai.session.compaction.WindowCompactionStrategy;
 import org.springframework.ai.tool.execution.ToolExecutionException;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -31,8 +30,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import redis.clients.jedis.RedisClient;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -49,40 +48,28 @@ public class AiConfig {
         return new BoundedToolCallingManager(delegate, maxIterations);
     }
 
-    // just delegate it manually to the auto-config, to avoid the conditional exclude of this bean creation
-    @Bean
-    ChatMemoryRepository redisChatMemoryRepository(RedisClient jedisClient,
-                                                   RedisChatMemoryProperties properties,
-                                                   RedisChatMemoryAutoConfiguration redisAutoConfig,
-                                                   ObservationRegistry observationRegistry) {
-        RedisChatMemoryRepository delegate = redisAutoConfig.redisChatMemory(jedisClient, properties);
-
-        return new RedisChatMemoryRepositoryObservationDecorator(delegate, observationRegistry);
-    }
-
-    @Bean
-    ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
-        return new SummaryBufferChatMemory(chatMemoryRepository, chatModel, 10, 20);
-    }
-
-    @Bean
-    MessageChatMemoryAdvisor memoryAdvisor(ChatMemory chatMemory) {
-        return MessageChatMemoryAdvisor
-                .builder(chatMemory)
-                .order(1) // runs first: stores/reads RAW user message
-                .build();
-    }
-
     // builder beans are singletons. make it prototype to avoid leaks
     @Bean
     @Scope("prototype")
     ChatClient.Builder chatClientBuilderWithChatMemory(ChatModel chatModel,
-                                                       MessageChatMemoryAdvisor memoryAdvisor,
+                                                       SessionService sessionService,
                                                        ObservationRegistry observationRegistry,
                                                        ToolCallAuditingAdvisor toolCallAuditingAdvisor) {
+        ChatModelSummarizer summarizer = ChatModelSummarizer.builder(chatModel).build();
+
+        WindowCompactionStrategy summaryStrategy = WindowCompactionStrategy.builder()
+                .lastTurns(5)
+                .summarizer(summarizer)
+                .build();
+
+        // this returns 2 advisors, the compactor and then the memory
+        List<Advisor> sessionAdvisorsGroup = SessionAdvisors.builder(sessionService)
+                .compaction(new TurnCountTrigger(9), summaryStrategy)
+                .build();
+
         return ChatClient
                 .builder(chatModel, observationRegistry, null, null)
-                .defaultAdvisors(memoryAdvisor, toolCallAuditingAdvisor);
+                .defaultAdvisors(sessionAdvisorsGroup.getFirst(), sessionAdvisorsGroup.getLast(), toolCallAuditingAdvisor);
     }
 
     /**

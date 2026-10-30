@@ -1,6 +1,5 @@
 package org.learnings.ai.shoppingassistant.integration.evaluation;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,7 +15,6 @@ import org.learnings.ai.shoppingassistant.services.ChatReplyMapper;
 import org.learnings.ai.shoppingassistant.services.dtos.ChatReplyDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.evaluation.EvaluationRequest;
 import org.springframework.ai.evaluation.EvaluationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +29,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,16 +52,7 @@ class OrderAgentEvaluationTest {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private ChatMemory chatMemory;
-    @Autowired
     private MockRestServiceServer server;
-
-    private String conversationId;
-
-    @AfterEach
-    void tearDown() {
-        chatMemory.clear(conversationId);
-    }
 
     @ParameterizedTest
     @MethodSource("loadCases")
@@ -80,7 +70,7 @@ class OrderAgentEvaluationTest {
                           "status":"PAID"
                         }
                         """.formatted(orderId), MediaType.APPLICATION_JSON));
-        conversationId = "evaluation-" + testCase.id();
+        String conversationId = "evaluation-" + testCase.id() + "-" + UUID.randomUUID();
 
         AgentChatResult agentChatResult = orderAgent.chat(new AgentRequest(testCase.question(), conversationId, "anon:eval-user"));
 

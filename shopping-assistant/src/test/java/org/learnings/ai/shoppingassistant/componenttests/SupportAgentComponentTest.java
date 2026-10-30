@@ -7,15 +7,13 @@ import org.learnings.ai.shoppingassistant.web.controllers.ChatController;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.session.compaction.ChatModelSummarizer;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -25,14 +23,17 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.learnings.ai.shoppingassistant.agents.RouterAgent.RoutingStep.AgentType.SUPPORT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.ai.chat.messages.MessageType.ASSISTANT;
+import static org.springframework.ai.chat.messages.MessageType.USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,19 +61,22 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         mockModel(chatMessage);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
+        String conversationId = "simple-" + UUID.randomUUID();
 
-        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, "some-conversation-id");
+        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, conversationId);
 
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.generations[0].text").value("some response"));
+
+        assertThat(history(conversationId)).containsExactly(
+                tuple(USER, chatMessage),
+                tuple(ASSISTANT, "some response"));
         verify(chatModel).getOptions();
         verify(chatModel).call(any(Prompt.class));
-        verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:some-conversation-id");
-        verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:some-conversation-id"), any());
-        verify(userMemoryRepository).findById("anon:sess-abc");
+        verify(userMemoryRepository).findById(USER_ID);
         verify(vectorStore).similaritySearch(any(SearchRequest.class));
         verify(routerChatClient).prompt();
         verifyNoMoreSuperClassMocksInteractions();
@@ -88,12 +92,6 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("first response")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("second response")))));
         String conversationId = "history-" + UUID.randomUUID();
-        when(redisChatMemoryRepository.findByConversationId("anon:sess-abc:" + conversationId))
-                .thenReturn(List.of())
-                .thenReturn(List.of(
-                        new UserMessage(chatMessage1),
-                        new AssistantMessage("first response")
-                ));
 
         ChatController.CreateChat first = new ChatController.CreateChat(chatMessage1, conversationId);
         mockMvc.perform(post("/chat")
@@ -110,23 +108,18 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(promptCaptor.capture());
-        verify(redisChatMemoryRepository, times(6))
-                .findByConversationId("anon:sess-abc:" + conversationId);
-
         // the second call must carry the first turn (user question + assistant reply) as history.
-        // NOTE: the RAG advisor wraps the current user query in its QA template, so we assert
-        // against the joined text of all messages (substring match) rather than exact per-message equality.
-        Prompt secondPrompt = promptCaptor.getAllValues().get(1);
-        String secondPromptText = secondPrompt.getInstructions().stream()
-                .map(Message::getText)
-                .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(secondPromptText).contains(chatMessage1, "first response", chatMessage2);
+        // the RAG advisor wraps the current query in its QA template, hence the substring match.
+        assertThat(promptText(promptCaptor.getAllValues().get(1)))
+                .contains(chatMessage1, "first response", chatMessage2);
+        assertThat(history(conversationId)).containsExactly(
+                tuple(USER, chatMessage1),
+                tuple(ASSISTANT, "first response"),
+                tuple(USER, chatMessage2),
+                tuple(ASSISTANT, "second response"));
         verify(chatModel, times(2)).getOptions();
-        verify(chatModel, times(2)).call(any(Prompt.class));
         verify(vectorStore, times(2)).similaritySearch(any(SearchRequest.class));
-        verify(redisChatMemoryRepository, times(6)).findByConversationId("anon:sess-abc:" + conversationId);
-        verify(redisChatMemoryRepository, times(4)).saveAll(eq("anon:sess-abc:" + conversationId), any());
-        verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
+        verify(userMemoryRepository, times(2)).findById(USER_ID);
         verify(routerChatClient, times(2)).prompt();
         verifyNoMoreSuperClassMocksInteractions();
         verifyNoMoreInteractions(chatModel, routerChatClient);
@@ -158,26 +151,18 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(promptCaptor.capture());
-        verify(redisChatMemoryRepository, times(3))
-                .findByConversationId("anon:sess-abc:" + conversationId1);
-        verify(redisChatMemoryRepository, times(3))
-                .findByConversationId("anon:sess-abc:" + conversationId2);
-
         // a different conversation must not leak the first turn
-        Prompt secondPrompt = promptCaptor.getAllValues().get(1);
-        String secondPromptText = secondPrompt.getInstructions().stream()
-                .map(Message::getText)
-                .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(secondPromptText)
+        assertThat(promptText(promptCaptor.getAllValues().get(1)))
                 .doesNotContain(chatMessage1, "first response");
+        assertThat(history(conversationId1)).containsExactly(
+                tuple(USER, chatMessage1),
+                tuple(ASSISTANT, "first response"));
+        assertThat(history(conversationId2)).containsExactly(
+                tuple(USER, chatMessage2),
+                tuple(ASSISTANT, "second response"));
         verify(chatModel, times(2)).getOptions();
-        verify(chatModel, times(2)).call(any(Prompt.class));
         verify(vectorStore, times(2)).similaritySearch(any(SearchRequest.class));
-        verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId1);
-        verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId2);
-        verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId1), any());
-        verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId2), any());
-        verify(userMemoryRepository, times(2)).findById("anon:sess-abc");
+        verify(userMemoryRepository, times(2)).findById(USER_ID);
         verify(routerChatClient, times(2)).prompt();
         verifyNoMoreSuperClassMocksInteractions();
         verifyNoMoreInteractions(chatModel, routerChatClient);
@@ -200,44 +185,26 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        // the retrieval path must have been consulted and its content fed to the model
-        verify(vectorStore).similaritySearch(any(SearchRequest.class));
-
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(promptCaptor.capture());
-        String promptText = promptCaptor.getValue().getInstructions().stream()
-                .map(Message::getText)
-                .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(promptText).contains("RETRIEVED_RETURN_POLICY_CHUNK");
+        assertThat(promptText(promptCaptor.getValue())).contains("RETRIEVED_RETURN_POLICY_CHUNK");
+        // the raw question is stored, not the RAG-augmented one
+        assertThat(history(conversationId)).containsExactly(
+                tuple(USER, chatMessage),
+                tuple(ASSISTANT, "some response"));
         verify(chatModel).getOptions();
-        verify(chatModel).call(any(Prompt.class));
-        verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:" + conversationId);
-        verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:" + conversationId), any());
-        verify(userMemoryRepository).findById("anon:sess-abc");
+        verify(userMemoryRepository).findById(USER_ID);
         verify(vectorStore).similaritySearch(any(SearchRequest.class));
         verify(routerChatClient).prompt();
         verifyNoMoreSuperClassMocksInteractions();
         verifyNoMoreInteractions(chatModel, routerChatClient);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void chat_when10TurnsOfQuestionsWithSameConversationId_compactsMessages() throws Exception {
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("ok")))));
-
         String conversationId = "compact-" + UUID.randomUUID();
-        String fullConversationId = "anon:sess-abc:" + conversationId;
-
-        Map<String, List<Message>> redisStore = new ConcurrentHashMap<>();
-        when(redisChatMemoryRepository.findByConversationId(fullConversationId))
-                .thenAnswer(_ -> redisStore.getOrDefault(fullConversationId, List.of()));
-        doAnswer(invocation -> {
-            String id = invocation.getArgument(0);
-            List<Message> messages = invocation.getArgument(1);
-            redisStore.put(id, List.copyOf(messages));
-            return null;
-        }).when(redisChatMemoryRepository).saveAll(any(String.class), any(List.class));
 
         for (int i = 1; i <= 10; i++) {
             String chatMessage = "msg-" + i;
@@ -250,23 +217,24 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
                     .andExpect(status().isOk());
         }
 
-        List<Message> persisted = redisStore.get(fullConversationId);
-        assertThat(persisted).isNotNull();
-        assertThat(persisted).hasSize(11);
-        assertThat(persisted.getFirst()).isInstanceOf(SystemMessage.class);
-        assertThat(persisted.getFirst().getText()).startsWith("Summary of earlier conversation:\n");
-
-        List<String> rawTexts = persisted.stream()
-                .skip(1)
-                .map(Message::getText)
-                .toList();
-        assertThat(rawTexts).hasSize(10).contains("msg-10").doesNotContain("msg-1");
+        // 10 chat calls + 1 summary call, made after the 10th turn
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(11)).call(promptCaptor.capture());
+        assertThat(promptText(promptCaptor.getAllValues().getLast()))
+                .contains("msg-1", "msg-5")
+                .doesNotContain("msg-10");
+        // the summary turn stands in for turns 1-5, the last 5 turns are kept raw
+        assertThat(history(conversationId)).containsExactly(
+                tuple(USER, ChatModelSummarizer.DEFAULT_SHADOW_PROMPT),
+                tuple(ASSISTANT, "ok"),
+                tuple(USER, "msg-6"), tuple(ASSISTANT, "ok"),
+                tuple(USER, "msg-7"), tuple(ASSISTANT, "ok"),
+                tuple(USER, "msg-8"), tuple(ASSISTANT, "ok"),
+                tuple(USER, "msg-9"), tuple(ASSISTANT, "ok"),
+                tuple(USER, "msg-10"), tuple(ASSISTANT, "ok"));
         verify(chatModel, times(10)).getOptions();
-        verify(chatModel, times(11)).call(any(Prompt.class));
         verify(vectorStore, times(10)).similaritySearch(any(SearchRequest.class));
-        verify(redisChatMemoryRepository, times(30)).findByConversationId("anon:sess-abc:" + conversationId);
-        verify(redisChatMemoryRepository, times(20)).saveAll(eq("anon:sess-abc:" + conversationId), any());
-        verify(userMemoryRepository, times(10)).findById("anon:sess-abc");
+        verify(userMemoryRepository, times(10)).findById(USER_ID);
         verify(routerChatClient, times(10)).prompt();
         verifyNoMoreSuperClassMocksInteractions();
         verifyNoMoreInteractions(chatModel, routerChatClient);
@@ -278,12 +246,11 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
         mockModel(chatMessage);
         when(chatModel.call(any(Prompt.class)))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("some response")))));
-        when(userMemoryRepository.findById("anon:sess-abc"))
-                .thenReturn(java.util.Optional.of(Map.of("currency", "EUR", "size", "M")));
+        when(userMemoryRepository.findById(USER_ID))
+                .thenReturn(Optional.of(Map.of("currency", "EUR", "size", "M")));
 
-        UUID conversationId = UUID.randomUUID();
-        ChatController.CreateChat request =
-                new ChatController.CreateChat(chatMessage, "profile-" + conversationId);
+        String conversationId = "profile-" + UUID.randomUUID();
+        ChatController.CreateChat request = new ChatController.CreateChat(chatMessage, conversationId);
         mockMvc.perform(post("/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
@@ -291,18 +258,16 @@ public class SupportAgentComponentTest extends AbstractComponentTestWithMockedEx
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(promptCaptor.capture());
-        String promptText = promptCaptor.getValue().getInstructions().stream()
-                .map(Message::getText)
-                .collect(java.util.stream.Collectors.joining("\n"));
-        assertThat(promptText)
+        assertThat(promptText(promptCaptor.getValue()))
                 .contains("Known information about the user:")
                 .contains("currency=EUR").contains("size=M");
+        // the profile is injected per request, never persisted into the conversation
+        assertThat(history(conversationId)).containsExactly(
+                tuple(USER, chatMessage),
+                tuple(ASSISTANT, "some response"));
         verify(chatModel).getOptions();
-        verify(chatModel).call(any(Prompt.class));
         verify(vectorStore).similaritySearch(any(SearchRequest.class));
-        verify(redisChatMemoryRepository, times(3)).findByConversationId("anon:sess-abc:profile-" + conversationId);
-        verify(redisChatMemoryRepository, times(2)).saveAll(eq("anon:sess-abc:profile-" + conversationId), any());
-        verify(userMemoryRepository).findById("anon:sess-abc");
+        verify(userMemoryRepository).findById(USER_ID);
         verify(routerChatClient).prompt();
         verifyNoMoreSuperClassMocksInteractions();
         verifyNoMoreInteractions(chatModel, routerChatClient);

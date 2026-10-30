@@ -32,12 +32,12 @@ public class ChatEndpointInputValidationComponentTest extends AbstractComponentT
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
 
-        verifyNoInteractions(vectorStore, redisChatMemoryRepository, userMemoryRepository);
+        verifyNoInteractions(vectorStore, userMemoryRepository);
     }
 
     private static Stream<Arguments> invalidRequestBodies() {
         return Stream.of(
-                arguments(named("missing body", null), "{\"detail\":\"Failed to read request\",\"instance\":\"/chat\",\"status\":400,\"title\":\"Bad Request\"}"),
+                arguments(named("missing body", null), "{\"detail\":\"Failed to read request\",\"status\":400,\"title\":\"Bad Request\"}"),
                 arguments(named("null message", "{}"), "{\"errorCode\":\"INVALID_USER_INPUT\",\"errorMessage\":\"message: must not be blank\"}"),
                 arguments(named("empty message", "{\"message\":\"\"}"), "{\"errorCode\":\"INVALID_USER_INPUT\",\"errorMessage\":\"message: must not be blank\"}"),
                 arguments(named("blank message", "{\"message\":\"  \"}"), "{\"errorCode\":\"INVALID_USER_INPUT\",\"errorMessage\":\"message: must not be blank\"}")
