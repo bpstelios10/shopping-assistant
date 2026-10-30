@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.1.0'
+    id 'org.springframework.boot' version '4.2.0-RC1'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'
 }
@@ -20,11 +20,11 @@ repositories {
 
 ext {
     versions = [
-            micrometerPrometheus: '1.17.0-M3',
+            micrometerPrometheus: '1.18.0-RC1',
             // not Spring BOM related
-            springAiVersion: '2.0.0',
-            lombok: '1.18.44',
-            postgresql: '42.7.13'
+            springAiVersion: '2.1.0-RC1',
+            lombok: '1.18.48',
+            postgresql: '42.7.14'
     ]
 }
 
@@ -43,17 +43,17 @@ dependencies {
     // this dependency is for RAG ingestion only
     implementation 'org.springframework.ai:spring-ai-tika-document-reader'
     implementation 'org.springframework.ai:spring-ai-vector-store-advisor'
-    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis'
+    implementation 'org.springframework.ai:spring-ai-starter-model-session-jdbc'
 
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-flyway'
     implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly "org.postgresql:postgresql:${versions.postgresql}"
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.4'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.3.1'
 
     implementation "io.micrometer:micrometer-registry-prometheus:${versions.micrometerPrometheus}"
     // this adds for datasource the metrics: jdbc.connection and jdbc.query
-    implementation "net.ttddyy.observation:datasource-micrometer-spring-boot:2.2.1"
+    implementation "net.ttddyy.observation:datasource-micrometer-spring-boot:2.3.0"
 
     compileOnly "org.projectlombok:lombok:${versions.lombok}"
     annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
@@ -64,7 +64,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    maxHeapSize = "2G"
+    maxHeapSize = "1G"
 }
 
 // exclude integration tests from clean build

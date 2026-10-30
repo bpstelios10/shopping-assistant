@@ -106,7 +106,7 @@ class RestOrderClientTest {
         String requestBody = """
                 {
                   "product_id": "%s",
-                  "quantity": %d,
+                  "quantity": %d
                 }
                 """.formatted(order.productId(), order.quantity());
 
@@ -134,7 +134,7 @@ class RestOrderClientTest {
         String requestBody = """
                 {
                   "product_id": "%s",
-                  "quantity": %d,
+                  "quantity": %d
                 }
                 """.formatted(order.productId(), order.quantity());
 

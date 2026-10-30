@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.DefaultChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.client.advisor.api.MemoryAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
@@ -286,7 +286,7 @@ class ChatClientAgentTest {
                 ChatClient.AdvisorSpec advisorSpec = mock(ChatClient.AdvisorSpec.class);
                 when(advisorSpec.param(any(), any())).thenReturn(advisorSpec);
                 consumer.accept(advisorSpec);
-                verify(advisorSpec).param(ChatMemory.CONVERSATION_ID, CONVERSATION_ID);
+                verify(advisorSpec).param(MemoryAdvisor.CONVERSATION_ID, CONVERSATION_ID);
                 verify(advisorSpec).param("agent", AGENT_NAME);
                 verify(advisorSpec).param(eq(TOOL_CALLS_CONTEXT_KEY), anyList());
 

@@ -5,7 +5,7 @@ import org.learnings.ai.shoppingassistant.agents.prompts.PromptProvider;
 import org.learnings.ai.shoppingassistant.tools.ToolContextValues;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
-import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.client.advisor.api.MemoryAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
@@ -76,7 +76,7 @@ public class ChatClientAgent implements Agent {
         return chatClient
                 .prompt(promptProvider.buildPrompt(request.message(), request.userId()))
                 .advisors(a -> a
-                        .param(ChatMemory.CONVERSATION_ID, request.conversationId())
+                        .param(MemoryAdvisor.CONVERSATION_ID, request.conversationId())
                         .param("agent", name)
                         // synchronized: under streaming the auditing advisor appends from Reactor threads
                         .param(TOOL_CALLS_CONTEXT_KEY,

@@ -55,19 +55,14 @@ spring:
         index-type: hnsw
         distance-type: cosine_distance
         dimensions: 768 # nomic-embed-text output dimension
-    # chat-memory
-    chat:
-      memory:
-        redis:
-          initialize-schema: true
-          time-to-live: 1209600s # 14 days
-          key-prefix: "chat:memory:"
-          index-name: "chat-memory-index"
-  # this is for redis storing chat-memory
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+    session:
+      time-to-live: 14d
+      repository:
+        jdbc:
+          # automatically create the required 'AI_SESSION' and 'AI_SESSION_EVENT' schema tables on startup.
+          initialize-schema: always
+          # Optional: Overrides the default cleanup frequency for expired sessions
+          cleanup-cron: "0 */30 * * * *"
 
 clients:
   services:
